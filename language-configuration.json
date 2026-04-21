@@ -46,9 +46,5 @@
       "\"",
       "\""
     ]
-  ],
-  "unbalancedBracketScopes": [
-    "string.quoted.double.intouch",
-    "comment.block.intouch"
   ]
 }

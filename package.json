@@ -49,7 +49,14 @@
       {
         "language": "intouch",
         "scopeName": "source.intouch",
-        "path": "./syntaxes/intouch.tmLanguage.json"
+        "path": "./syntaxes/intouch.tmLanguage.json",
+        "balancedBracketScopes": [
+          "*"
+        ],
+        "unbalancedBracketScopes": [
+          "string.quoted.double.intouch",
+          "comment.block.intouch"
+        ]
       }
     ]
   },
