@@ -29,6 +29,19 @@
         "extensions": [
           ".intouch"
         ],
+        "firstLine": "^\\s*(\\{.*\\}|INTEGER|REAL|DISCRETE|MESSAGE|TIME|IF|THEN|WHILE|FOR|TagRead|TagWrite|\\$DateString|InTouch|QuickScript)",
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "intouch",
+        "aliases": [
+          "InTouch QuickScript (TXT)",
+          "intouch-txt"
+        ],
+        "extensions": [
+          ".txt"
+        ],
+        "firstLine": "^\\s*(\\{.*\\}|INTEGER|REAL|DISCRETE|MESSAGE|TIME|IF|THEN|WHILE|FOR|TagRead|TagWrite|\\$DateString|InTouch|QuickScript)",
         "configuration": "./language-configuration.json"
       }
     ],
