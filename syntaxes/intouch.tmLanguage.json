@@ -55,7 +55,7 @@
     "keywords": {
       "patterns": [
         {
-          "match": "\\b(IF|THEN|ELSE|ELSEIF|ENDIF|WHILE|ENDWHILE|FOR|NEXT|GOTO|CALL|RETURN|EXIT)\\b",
+          "match": "\\b(IF|THEN|ELSE|ELSEIF|ENDIF|WHILE|ENDWHILE|FOR|NEXT|GOTO|CALL|RETURN|EXIT|DIM|AS|TO)\\b",
           "name": "keyword.control.intouch"
         },
         {
@@ -95,7 +95,7 @@
           "name": "support.function.io.intouch"
         },
         {
-          "match": "\\b(Show|Hide|ToggleHide|PrintWindow|CloseWindow|WWDialUp|WWControl|WWExecute)\\s*\\(",
+          "match": "\\b(Show|Hide|ToggleHide|PrintWindow|CloseWindow|WWDialUp|WWControl|WWExecute|ShowAt)\\s*\\(",
           "name": "support.function.window.intouch"
         },
         {
@@ -111,7 +111,7 @@
           "name": "support.function.historian.intouch"
         },
         {
-          "match": "\\b(SQLConnect|SQLCreateTable|SQLDelete|SQLDropTable|SQLExecute|SQLInsert|SQLSelect|SQLSetParamValue|SQLSetStatement|SQLTranCommit|SQLTranRollback|SQLTranStart|SQLUpdate|SQLUpdateCurrent)\\s*\\(",
+          "match": "\\b(SQLConnect|SQLCreateTable|SQLDelete|SQLDropTable|SQLExecute|SQLInsert|SQLSelect|SQLSetParamValue|SQLSetStatement|SQLTranCommit|SQLTranRollback|SQLTranStart|SQLUpdate|SQLUpdateCurrent|SQLNext|SQLNumRows|SQLPrepareStatement|SQLDisconnect|SQLEnd|SQLErrorMsg|SQLFirst|SQLGetRecord|SQLClearParam|SQLClearStatement|SQLAppendStatement)\\s*\\(",
           "name": "support.function.sql.intouch"
         },
         {
