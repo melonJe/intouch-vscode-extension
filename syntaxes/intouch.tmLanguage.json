@@ -1,0 +1,112 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "InTouch QuickScript",
+  "scopeName": "source.intouch",
+  "fileTypes": [".intouch"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#operators" },
+    { "include": "#functions" },
+    { "include": "#systemVariables" },
+    { "include": "#numbers" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [{
+        "begin": "\\{",
+        "end": "\\}",
+        "name": "comment.block.intouch",
+        "patterns": [
+          {
+            "match": "\\b(TODO|FIXME|HACK|NOTE|BUG|XXX)\\b",
+            "name": "keyword.todo.intouch"
+          }
+        ]
+      }]
+    },
+    "strings": {
+      "patterns": [{
+        "match": "\"[^\"]*\"",
+        "name": "string.quoted.double.intouch"
+      }]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "match": "\\b(IF|THEN|ELSE|ELSEIF|ENDIF|WHILE|ENDWHILE|FOR|NEXT|GOTO|CALL|RETURN|EXIT)\\b",
+          "name": "keyword.control.intouch"
+        },
+        {
+          "match": "\\b(INTEGER|REAL|DISCRETE|MESSAGE|TIME|BOOLEAN)\\b",
+          "name": "storage.type.intouch"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "match": "\\b(AND|OR|NOT|XOR|MOD)\\b",
+          "name": "keyword.operator.logical.intouch"
+        },
+        {
+          "match": "\\+|-\\*|/|\\^",
+          "name": "keyword.operator.arithmetic.intouch"
+        },
+        {
+          "match": "=|<>|>|<|>=|<=",
+          "name": "keyword.operator.comparison.intouch"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "match": "\\b(StringASCII|StringChar|StringCompare|StringCompareNoCase|StringFind|StringFromIntg|StringFromReal|StringFromTime|StringFromTimeLocal|StringInString|StringLeft|StringLen|StringLower|StringMid|StringReplace|StringRight|StringSpace|StringTest|StringToIntg|StringToReal|StringTrim|StringUpper|Text|DText)\\s*\\(",
+          "name": "support.function.string.intouch"
+        },
+        {
+          "match": "\\b(Abs|Atan|Cos|Exp|Log|LogN|Pi|Round|Sgn|Sin|Sqrt|Tan|ArcCos|ArcSin|ArcTan|Pow|Frac|Int|Max|Min)\\s*\\(",
+          "name": "support.function.math.intouch"
+        },
+        {
+          "match": "\\b(TagRead|TagWrite|TagExists|TagDelete|TagSetAttribute|TagGetAttribute)\\s*\\(",
+          "name": "support.function.io.intouch"
+        },
+        {
+          "match": "\\b(Show|Hide|ToggleHide|PrintWindow|CloseWindow|WWDialUp|WWControl|WWExecute)\\s*\\(",
+          "name": "support.function.window.intouch"
+        },
+        {
+          "match": "\\b(Ack|AlmAckAll|AlmAckSelect|AlmAckSelected|AlmSelect|AlmMoveCursor|AlmShow|AlmSuppress|AlmUnSuppress)\\s*\\(",
+          "name": "support.function.alarm.intouch"
+        },
+        {
+          "match": "\\b(FileRead|FileWrite|FileDelete|FileCopy|FileMove|FileFindFirst|FileFindNext|FileClose)\\s*\\(",
+          "name": "support.function.file.intouch"
+        },
+        {
+          "match": "\\b(HTGetPenName|HTGetValue|HTGetTimeAtScooter|HTGetTimeStringAtScooter|HTSetPenName|HTUpdateToCurrentTime)\\s*\\(",
+          "name": "support.function.historian.intouch"
+        },
+        {
+          "match": "\\b(VerifyUser|GetUserName|IsAuthorized|InTouchVersion|InTouchAppDir|InTouchViewAccess|PostEvent|SendKeys|PlaySound|LogMessage|Execute|WinPlatform|GetNodeName|GetProjectName)\\s*\\(",
+          "name": "support.function.system.intouch"
+        }
+      ]
+    },
+    "systemVariables": {
+      "patterns": [{
+        "match": "\\$[A-Za-z][A-Za-z0-9]*",
+        "name": "variable.language.intouch"
+      }]
+    },
+    "numbers": {
+      "patterns": [{
+        "match": "\\b\\d+(\\.\\d+)?\\b",
+        "name": "constant.numeric.intouch"
+      }]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "intouch-language",
+  "displayName": "InTouch QuickScript Language Support",
+  "description": "Syntax highlighting for AVEVA InTouch HMI QuickScript (.intouch files)",
+  "version": "0.1.0",
+  "publisher": "melonJe",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "intouch",
+    "wonderware",
+    "aveva",
+    "hmi",
+    "scada",
+    "quickscript"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "intouch",
+        "aliases": [
+          "InTouch QuickScript",
+          "intouch"
+        ],
+        "extensions": [
+          ".intouch"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "intouch",
+        "scopeName": "source.intouch",
+        "path": "./syntaxes/intouch.tmLanguage.json"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/melonJe/intouch-vscode-extension.git"
+  }
+}

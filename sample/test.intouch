@@ -1,0 +1,80 @@
+{ This is a sample InTouch QuickScript file for testing syntax highlighting }
+{ TODO: Add more comprehensive test cases }
+
+INTEGER motorSpeed;
+REAL temperature;
+DISCRETE motorRunning;
+MESSAGE statusText;
+
+{ Initialize system variables }
+statusText = "System starting at " + $DateString + " " + $TimeString;
+
+IF motorRunning THEN
+    motorSpeed = 1500;
+    temperature = TagRead("Reactor1.Temp");
+    
+    IF temperature > 100.0 THEN
+        motorSpeed = motorSpeed * 0.8;
+        { FIXME: Add alarm handling logic }
+    ELSEIF temperature < 0.0 THEN
+        motorSpeed = 0;
+    ENDIF
+    
+    { Calculate power consumption }
+    REAL power = Abs(motorSpeed) * 0.75;
+    TagWrite("Motor.Power", power);
+ELSE
+    motorSpeed = 0;
+    temperature = 0.0;
+ENDIF
+
+{ String manipulation examples }
+MESSAGE deviceName = StringLeft("Reactor1_Pump_A", 8);
+INTEGER len = StringLen(deviceName);
+MESSAGE upperName = StringUpper(deviceName);
+
+{ Window control }
+Show("MainDisplay");
+Hide("StartupScreen");
+
+{ Alarm handling }
+IF TagRead("System.Fault") THEN
+    Ack("System.Fault");
+    PlaySound("beep.wav");
+ENDIF
+
+{ Loop example }
+INTEGER i;
+FOR i = 1 TO 10
+    TagWrite("Loop.Counter", i);
+    StringMid("ABCDEFGHIJ", i, 1);
+NEXT
+
+{ Mathematical operations }
+REAL angle = 45.0;
+REAL radian = angle * Pi() / 180.0;
+REAL sineValue = Sin(radian);
+REAL root = Sqrt(2.0);
+
+{ File operations - NOTE: Check permissions }
+FileWrite("log.txt", $DateString + " - Process completed");
+
+{ Security check }
+IF VerifyUser() THEN
+    LogMessage("User " + GetUserName() + " logged in");
+ENDIF
+
+WHILE motorRunning AND temperature < 80.0
+    temperature = TagRead("Reactor1.Temp");
+    $Second = $Second + 1;
+ENDWHILE
+
+{ HACK: Temporary workaround for timing issue }
+{ BUG: Memory leak in historian access - XXX needs fix }
+
+HTGetPenName("Trend1", 1);
+PrintWindow("Report");
+Execute("calc.exe");
+
+{ End of script }
+EXIT;
