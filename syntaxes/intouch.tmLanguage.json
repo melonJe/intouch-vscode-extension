@@ -47,7 +47,8 @@
     "strings": {
       "patterns": [
         {
-          "match": "\"[^\"]*\"",
+          "begin": "\"",
+          "end": "\"",
           "name": "string.quoted.double.intouch"
         }
       ]

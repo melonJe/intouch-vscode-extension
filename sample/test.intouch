@@ -69,6 +69,19 @@ WHILE motorRunning AND temperature < 80.0
     $Second = $Second + 1;
 ENDWHILE
 
+{ Multi-line SQL example - bracket highlighting test }
+SQLAppendStatement(L2_Com_DBConnID_APP2,
+    "SELECT * FROM WITH_SCHEDULE " +
+    "WHERE rec_no = " + recNo);
+
+iStat = SQLExecute(L2_Com_DBConnID_APP2, "L2_Bind_Com_Checked_Roll_Unit", 0);
+
+{ Complex multi-line SQL with nested parentheses }
+SQLAppendStatement(DBConn,
+    "SELECT SLAB_NO FROM WITH_SCHEDULE " +
+    "WHERE rec_no = (SELECT MIN(rec_no) FROM WITH_SCHEDULE) " +
+    "AND STD_CODE LIKE '%-CHK%'");
+
 { HACK: Temporary workaround for timing issue }
 { BUG: Memory leak in historian access - XXX needs fix }
 

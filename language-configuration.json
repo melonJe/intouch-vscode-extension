@@ -1,20 +1,54 @@
 {
   "comments": {
-    "blockComment": ["{", "}"]
+    "blockComment": [
+      "{",
+      "}"
+    ]
   },
   "brackets": [
-    ["(", ")"],
-    ["[", "]"]
+    [
+      "(",
+      ")"
+    ],
+    [
+      "[",
+      "]"
+    ]
   ],
   "autoClosingPairs": [
-    ["(", ")"],
-    ["[", "]"],
-    ["\"", "\""],
-    ["{", "}"]
+    [
+      "(",
+      ")"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "\"",
+      "\""
+    ],
+    [
+      "{",
+      "}"
+    ]
   ],
   "surroundingPairs": [
-    ["(", ")"],
-    ["[", "]"],
-    ["\"", "\""]
+    [
+      "(",
+      ")"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "\"",
+      "\""
+    ]
+  ],
+  "unbalancedBracketScopes": [
+    "string.quoted.double.intouch",
+    "comment.block.intouch"
   ]
 }
