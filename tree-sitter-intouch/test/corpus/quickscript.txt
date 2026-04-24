@@ -1,0 +1,230 @@
+================================================================================
+DIM declaration
+================================================================================
+
+DIM motorSpeed INTEGER;
+DIM temperature REAL;
+DIM statusText MESSAGE;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement (declaration name: (identifier) type: (data_type)))
+  (statement (declaration name: (identifier) type: (data_type)))
+  (statement (declaration name: (identifier) type: (data_type))))
+
+================================================================================
+Assignment with % tag
+================================================================================
+
+Batch%Conc = SetPoint;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement
+    (assignment
+      left: (identifier)
+      right: (expression (primary_expression (identifier))))))
+
+================================================================================
+Assignment to property_access
+================================================================================
+
+HistTrend.ChartLength = 180;
+HistTrend.Pen4 = SetPoint.TagID;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement
+    (assignment
+      left: (property_access (identifier) property: (identifier))
+      right: (expression (primary_expression (number)))))
+  (statement
+    (assignment
+      left: (property_access (identifier) property: (identifier))
+      right: (expression (primary_expression
+        (property_access (identifier) property: (identifier)))))))
+
+================================================================================
+Bare commands
+================================================================================
+
+HideSelf;
+ShowHome;
+Show "Operator help";
+Hide "Conveyor";
+Ack ReactLevel;
+Ack $System;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement (command_statement command: (identifier)))
+  (statement (command_statement command: (identifier)))
+  (statement (command_statement command: (identifier) arg: (string)))
+  (statement (command_statement command: (identifier) arg: (string)))
+  (statement (command_statement command: (identifier) arg: (identifier)))
+  (statement (command_statement command: (identifier) arg: (system_variable))))
+
+================================================================================
+IF with == and OR
+================================================================================
+
+IF Cycle == 5 OR Cycle == 6 THEN
+  HorizontalMove = 0;
+ENDIF;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement
+    (if_statement
+      condition: (expression
+        (binary_expression
+          left: (expression (binary_expression
+            left: (expression (primary_expression (identifier)))
+            right: (expression (primary_expression (number)))))
+          right: (expression (binary_expression
+            left: (expression (primary_expression (identifier)))
+            right: (expression (primary_expression (number)))))))
+      (statement
+        (assignment
+          left: (identifier)
+          right: (expression (primary_expression (number))))))))
+
+================================================================================
+Nested IF with ELSE + nested IF (no ELSEIF construct)
+================================================================================
+
+IF Step1 == 8 THEN
+  IF ProdLevel > 9000 THEN
+    Step1 = 9;
+  ELSE
+    IF ReactLevel <= 0 THEN
+      Step1 = 10;
+    ENDIF;
+  ENDIF;
+ENDIF;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement
+    (if_statement
+      condition: (expression (binary_expression
+        left: (expression (primary_expression (identifier)))
+        right: (expression (primary_expression (number)))))
+      (statement
+        (if_statement
+          condition: (expression (binary_expression
+            left: (expression (primary_expression (identifier)))
+            right: (expression (primary_expression (number)))))
+          (statement
+            (assignment
+              left: (identifier)
+              right: (expression (primary_expression (number)))))
+          (else_clause
+            (statement
+              (if_statement
+                condition: (expression (binary_expression
+                  left: (expression (primary_expression (identifier)))
+                  right: (expression (primary_expression (number)))))
+                (statement
+                  (assignment
+                    left: (identifier)
+                    right: (expression (primary_expression (number)))))))))))))
+
+================================================================================
+FOR loop with STEP
+================================================================================
+
+FOR i = 1 TO 10 STEP 2
+  TagWrite("Counter", i);
+NEXT;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement
+    (for_statement
+      variable: (identifier)
+      start: (expression (primary_expression (number)))
+      end: (expression (primary_expression (number)))
+      step: (expression (primary_expression (number)))
+      (statement
+        (expression_statement
+          (function_call
+            name: (identifier)
+            (expression (primary_expression (string)))
+            (expression (primary_expression (identifier)))))))))
+
+================================================================================
+Function call with property access on result
+================================================================================
+
+HTUpdateToCurrentTime( "HistTrend" );
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement
+    (expression_statement
+      (function_call
+        name: (identifier)
+        (expression (primary_expression (string)))))))
+
+================================================================================
+NOT + parenthesized expression
+================================================================================
+
+IF (NOT Auto) AND (PassWord == "INTOUCH") THEN
+  Auto = 1;
+ENDIF;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement
+    (if_statement
+      condition: (expression
+        (binary_expression
+          left: (expression (primary_expression
+            (parenthesized_expression
+              (expression (unary_expression
+                (expression (primary_expression (identifier))))))))
+          right: (expression (primary_expression
+            (parenthesized_expression
+              (expression (binary_expression
+                left: (expression (primary_expression (identifier)))
+                right: (expression (primary_expression (string))))))))))
+      (statement
+        (assignment
+          left: (identifier)
+          right: (expression (primary_expression (number))))))))
+
+================================================================================
+Trailing comment after ENDIF
+================================================================================
+
+IF Auto THEN
+  Step1 = 1;
+ELSE
+  Step1 = 11;
+ENDIF; {AUTO}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (statement
+    (if_statement
+      condition: (expression (primary_expression (identifier)))
+      (statement (assignment
+        left: (identifier)
+        right: (expression (primary_expression (number)))))
+      (else_clause
+        (statement (assignment
+          left: (identifier)
+          right: (expression (primary_expression (number))))))))
+  (comment))

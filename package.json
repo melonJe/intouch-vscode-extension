@@ -1,11 +1,12 @@
 {
   "name": "intouch-language",
-  "displayName": "InTouch QuickScript Language Support",
-  "description": "Syntax highlighting for AVEVA InTouch HMI QuickScript (.intouch files)",
-  "version": "0.1.0",
+  "displayName": "InTouch Support",
+  "description": "Tree-sitter-powered syntax highlighting for AVEVA InTouch HMI QuickScript and Window Report exports.",
+  "version": "2.0.0",
   "publisher": "melonJe",
+  "license": "MIT",
   "engines": {
-    "vscode": "^1.60.0"
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Programming Languages"
@@ -16,8 +17,10 @@
     "aveva",
     "hmi",
     "scada",
-    "quickscript"
+    "quickscript",
+    "tree-sitter"
   ],
+  "main": "./out/extension.js",
   "contributes": {
     "languages": [
       {
@@ -27,21 +30,10 @@
           "intouch"
         ],
         "extensions": [
-          ".intouch"
-        ],
-        "firstLine": "^\\s*(\\{.*\\}|INTEGER|REAL|DISCRETE|MESSAGE|TIME|IF|THEN|WHILE|FOR|TagRead|TagWrite|\\$DateString|InTouch|QuickScript)",
-        "configuration": "./language-configuration.json"
-      },
-      {
-        "id": "intouch",
-        "aliases": [
-          "InTouch QuickScript (TXT)",
-          "intouch-txt"
-        ],
-        "extensions": [
+          ".intouch",
           ".txt"
         ],
-        "firstLine": "^\\s*(\\{.*\\}|INTEGER|REAL|DISCRETE|MESSAGE|TIME|IF|THEN|WHILE|FOR|TagRead|TagWrite|\\$DateString|InTouch|QuickScript)",
+        "firstLine": "^\\s*(\\{|INTEGER|REAL|DISCRETE|MESSAGE|TIME|IF|THEN|WHILE|FOR|DIM|TagRead|TagWrite|\\$DateString|Window Report for|Object Type:|Application Scripts)",
         "configuration": "./language-configuration.json"
       }
     ],
@@ -49,19 +41,44 @@
       {
         "language": "intouch",
         "scopeName": "source.intouch",
-        "path": "./syntaxes/intouch.tmLanguage.json",
-        "balancedBracketScopes": [
-          "*"
-        ],
-        "unbalancedBracketScopes": [
-          "string.quoted.double.intouch",
-          "comment.block.intouch"
-        ]
+        "path": "./syntaxes/intouch.tmLanguage.json"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "intouch",
+        "scopes": {
+          "function.defaultLibrary": [
+            "support.function.intouch"
+          ],
+          "variable.defaultLibrary": [
+            "support.variable.intouch"
+          ],
+          "comment.documentation": [
+            "keyword.codetag.notation.intouch",
+            "comment.block.documentation.intouch"
+          ]
+        }
       }
     ]
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/melonJe/intouch-vscode-extension.git"
+  },
+  "dependencies": {
+    "web-tree-sitter": "^0.22.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.4.0"
+  },
+  "scripts": {
+    "build:parser": "cd tree-sitter-intouch && ./node_modules/.bin/tree-sitter generate && ./node_modules/.bin/tree-sitter build --wasm && cp tree-sitter-intouch.wasm ../out/",
+    "compile": "tsc -p .",
+    "vscode:prepublish": "npm run build:parser && npm run compile",
+    "package": "vsce package"
   }
 }

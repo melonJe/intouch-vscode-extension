@@ -2,140 +2,61 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "InTouch QuickScript",
   "scopeName": "source.intouch",
-  "fileTypes": [
-    ".intouch"
-  ],
   "patterns": [
-    {
-      "include": "#comments"
-    },
-    {
-      "include": "#strings"
-    },
-    {
-      "include": "#keywords"
-    },
-    {
-      "include": "#operators"
-    },
-    {
-      "include": "#functions"
-    },
-    {
-      "include": "#systemVariables"
-    },
-    {
-      "include": "#numbers"
-    }
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#keyword" },
+    { "include": "#type" },
+    { "include": "#operator-word" },
+    { "include": "#system-variable" },
+    { "include": "#number" }
   ],
   "repository": {
-    "comments": {
+    "comment": {
+      "name": "comment.block.intouch",
+      "begin": "\\{",
+      "end": "\\}",
       "patterns": [
         {
-          "begin": "\\{",
-          "end": "\\}",
-          "name": "comment.block.intouch",
-          "patterns": [
-            {
-              "match": "\\b(TODO|FIXME|HACK|NOTE|BUG|XXX)\\b",
-              "name": "keyword.todo.intouch"
-            }
-          ]
+          "name": "keyword.other.documentation.intouch",
+          "match": "\\b(TODO|FIXME|HACK|NOTE|BUG|XXX)\\b"
         }
       ]
     },
-    "strings": {
+    "string": {
+      "name": "string.quoted.double.intouch",
+      "begin": "\"",
+      "end": "\"|$",
       "patterns": [
         {
-          "begin": "\"",
-          "end": "\"",
-          "name": "string.quoted.double.intouch"
+          "name": "constant.character.escape.intouch",
+          "match": "\\\\."
         }
       ]
     },
-    "keywords": {
+    "keyword": {
       "patterns": [
         {
-          "match": "\\b(IF|THEN|ELSE|ELSEIF|ENDIF|WHILE|ENDWHILE|FOR|NEXT|GOTO|CALL|RETURN|EXIT|DIM|AS|TO)\\b",
-          "name": "keyword.control.intouch"
-        },
-        {
-          "match": "\\b(INTEGER|REAL|DISCRETE|MESSAGE|TIME|BOOLEAN)\\b",
-          "name": "storage.type.intouch"
+          "name": "keyword.control.intouch",
+          "match": "(?i)\\b(IF|THEN|ELSE|ENDIF|FOR|TO|STEP|NEXT|DIM|CALL|EXIT|RETURN|HideSelf|Show|Hide|Ack)\\b"
         }
       ]
     },
-    "operators": {
-      "patterns": [
-        {
-          "match": "\\b(AND|OR|NOT|XOR|MOD)\\b",
-          "name": "keyword.operator.logical.intouch"
-        },
-        {
-          "match": "\\+|-\\*|/|\\^",
-          "name": "keyword.operator.arithmetic.intouch"
-        },
-        {
-          "match": "=|<>|>|<|>=|<=",
-          "name": "keyword.operator.comparison.intouch"
-        }
-      ]
+    "type": {
+      "name": "storage.type.intouch",
+      "match": "(?i)\\b(INTEGER|REAL|DISCRETE|MESSAGE|TIME|BOOLEAN)\\b"
     },
-    "functions": {
-      "patterns": [
-        {
-          "match": "\\b(StringASCII|StringChar|StringCompare|StringCompareNoCase|StringFind|StringFromIntg|StringFromReal|StringFromTime|StringFromTimeLocal|StringInString|StringLeft|StringLen|StringLower|StringMid|StringReplace|StringRight|StringSpace|StringTest|StringToIntg|StringToReal|StringTrim|StringUpper|Text|DText)\\s*\\(",
-          "name": "support.function.string.intouch"
-        },
-        {
-          "match": "\\b(Abs|Atan|Cos|Exp|Log|LogN|Pi|Round|Sgn|Sin|Sqrt|Tan|ArcCos|ArcSin|ArcTan|Pow|Frac|Int|Max|Min|Random|Trunc)\\s*\\(",
-          "name": "support.function.math.intouch"
-        },
-        {
-          "match": "\\b(TagRead|TagWrite|TagExists|TagDelete|TagSetAttribute|TagGetAttribute)\\s*\\(",
-          "name": "support.function.io.intouch"
-        },
-        {
-          "match": "\\b(Show|Hide|ToggleHide|PrintWindow|CloseWindow|WWDialUp|WWControl|WWExecute|ShowAt)\\s*\\(",
-          "name": "support.function.window.intouch"
-        },
-        {
-          "match": "\\b(Ack|AlmAckAll|AlmAckSelect|AlmAckSelected|AlmSelect|AlmMoveCursor|AlmShow|AlmSuppress|AlmUnSuppress)\\s*\\(",
-          "name": "support.function.alarm.intouch"
-        },
-        {
-          "match": "\\b(FileRead|FileWrite|FileDelete|FileCopy|FileMove|FileFindFirst|FileFindNext|FileFindClose|FileClose|FileReadMessage|FileWriteMessage|InfoDisk|InfoFile|InfoResource)\\s*\\(",
-          "name": "support.function.file.intouch"
-        },
-        {
-          "match": "\\b(HTGetPenName|HTGetValue|HTGetTimeAtScooter|HTGetTimeStringAtScooter|HTSetPenName|HTUpdateToCurrentTime)\\s*\\(",
-          "name": "support.function.historian.intouch"
-        },
-        {
-          "match": "\\b(SQLConnect|SQLCreateTable|SQLDelete|SQLDropTable|SQLExecute|SQLInsert|SQLSelect|SQLSetParamValue|SQLSetStatement|SQLTranCommit|SQLTranRollback|SQLTranStart|SQLUpdate|SQLUpdateCurrent|SQLNext|SQLNumRows|SQLPrepareStatement|SQLDisconnect|SQLEnd|SQLErrorMsg|SQLFirst|SQLGetRecord|SQLClearParam|SQLClearStatement|SQLAppendStatement)\\s*\\(",
-          "name": "support.function.sql.intouch"
-        },
-        {
-          "match": "\\b(VerifyUser|GetUserName|IsAuthorized|InTouchVersion|InTouchAppDir|InTouchViewAccess|PostEvent|SendKeys|PlaySound|LogMessage|Execute|WinPlatform|GetNodeName|GetProjectName)\\s*\\(",
-          "name": "support.function.system.intouch"
-        }
-      ]
+    "operator-word": {
+      "name": "keyword.operator.intouch",
+      "match": "(?i)\\b(AND|OR|NOT|XOR|MOD)\\b"
     },
-    "systemVariables": {
-      "patterns": [
-        {
-          "match": "\\$[A-Za-z][A-Za-z0-9]*",
-          "name": "variable.language.intouch"
-        }
-      ]
+    "system-variable": {
+      "name": "variable.language.intouch",
+      "match": "\\$[A-Za-z][A-Za-z0-9_]*"
     },
-    "numbers": {
-      "patterns": [
-        {
-          "match": "\\b\\d+(\\.\\d+)?\\b",
-          "name": "constant.numeric.intouch"
-        }
-      ]
+    "number": {
+      "name": "constant.numeric.intouch",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
     }
   }
 }

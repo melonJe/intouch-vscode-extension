@@ -1,93 +1,62 @@
-{ This is a sample InTouch QuickScript file for testing syntax highlighting }
-{ TODO: Add more comprehensive test cases }
+{ InTouch QuickScript sample — exercises the major syntax features. }
 
-INTEGER motorSpeed;
-REAL temperature;
-DISCRETE motorRunning;
-MESSAGE statusText;
+{ --- Declarations --- }
+DIM motorSpeed INTEGER;
+DIM temperature REAL;
+DIM statusText MESSAGE;
+DIM motorRunning DISCRETE;
 
-{ Initialize system variables }
-statusText = "System starting at " + $DateString + " " + $TimeString;
+{ --- Assignments (including % tag names and tag properties) --- }
+Batch%Conc = SetPoint;
+motorSpeed = 1500;
+temperature = 25.5;
+HistTrend.ChartLength = 180;
+HistTrend.Pen4 = SetPoint.TagID;
 
-IF motorRunning THEN
-    motorSpeed = 1500;
-    temperature = TagRead("Reactor1.Temp");
-    
-    IF temperature > 100.0 THEN
-        motorSpeed = motorSpeed * 0.8;
-        { FIXME: Add alarm handling logic }
-    ELSEIF temperature < 0.0 THEN
-        motorSpeed = 0;
-    ENDIF
-    
-    { Calculate power consumption }
-    REAL power = Abs(motorSpeed) * 0.75;
-    TagWrite("Motor.Power", power);
-ELSE
-    motorSpeed = 0;
-    temperature = 0.0;
-ENDIF
+{ --- Bare commands (no parens) --- }
+HideSelf;
+ShowHome;              { user-defined Quickfunction }
+Show "Operator help";
+Hide "Conveyor";
+Ack ReactLevel;
+Ack $System;
 
-{ String manipulation examples }
-MESSAGE deviceName = StringLeft("Reactor1_Pump_A", 8);
-INTEGER len = StringLen(deviceName);
-MESSAGE upperName = StringUpper(deviceName);
+{ --- IF / nested IF with ELSE + inner IF (no dedicated ELSEIF) --- }
+IF Cycle == 5 OR Cycle == 6 THEN
+  HorizontalMove = 0;
+  VerticalMove = 0;
+ENDIF;
 
-{ Window control }
-Show("MainDisplay");
-Hide("StartupScreen");
+IF Step1 == 8 THEN
+  IF ProdLevel > 9000 THEN
+    Step1 = 9;
+  ELSE
+    IF ReactLevel <= 0 THEN
+      Step1 = 10;
+    ENDIF;
+  ENDIF;
+ENDIF; {AUTO}
 
-{ Alarm handling }
-IF TagRead("System.Fault") THEN
-    Ack("System.Fault");
-    PlaySound("beep.wav");
-ENDIF
+{ --- FOR loop with STEP --- }
+FOR i = 1 TO 10 STEP 2
+  TagWrite("Counter", i);
+  motorSpeed = i * 100;
+NEXT;
 
-{ Loop example }
-INTEGER i;
-FOR i = 1 TO 10
-    TagWrite("Loop.Counter", i);
-    StringMid("ABCDEFGHIJ", i, 1);
-NEXT
+{ --- Built-in function calls --- }
+statusText = StringFromReal(temperature, 2);
+HTUpdateToCurrentTime( "HistTrend" );
+TagWrite("Motor.Speed", motorSpeed);
 
-{ Mathematical operations }
-REAL angle = 45.0;
-REAL radian = angle * Pi() / 180.0;
-REAL sineValue = Sin(radian);
-REAL root = Sqrt(2.0);
+{ --- Logical + arithmetic expressions --- }
+IF (NOT Auto) AND (PassWord == "INTOUCH") THEN
+  Auto = 1;
+ENDIF;
 
-{ File operations - NOTE: Check permissions }
-FileWrite("log.txt", $DateString + " - Process completed");
+IF $Second > 0 AND $Second < 60 THEN
+  LogMessage("Heartbeat tick");
+ENDIF;
 
-{ Security check }
-IF VerifyUser() THEN
-    LogMessage("User " + GetUserName() + " logged in");
-ENDIF
-
-WHILE motorRunning AND temperature < 80.0
-    temperature = TagRead("Reactor1.Temp");
-    $Second = $Second + 1;
-ENDWHILE
-
-{ Multi-line SQL example - bracket highlighting test }
-SQLAppendStatement(L2_Com_DBConnID_APP2,
-    "SELECT * FROM WITH_SCHEDULE " +
-    "WHERE rec_no = " + recNo);
-
-iStat = SQLExecute(L2_Com_DBConnID_APP2, "L2_Bind_Com_Checked_Roll_Unit", 0);
-
-{ Complex multi-line SQL with nested parentheses }
-SQLAppendStatement(DBConn,
-    "SELECT SLAB_NO FROM WITH_SCHEDULE " +
-    "WHERE rec_no = (SELECT MIN(rec_no) FROM WITH_SCHEDULE) " +
-    "AND STD_CODE LIKE '%-CHK%'");
-
-{ HACK: Temporary workaround for timing issue }
-{ BUG: Memory leak in historian access - XXX needs fix }
-
-HTGetPenName("Trend1", 1);
-PrintWindow("Report");
-Execute("calc.exe");
-
-{ End of script }
+{ --- Subroutine call (legacy CALL) and EXIT --- }
+CALL Cleanup;
 EXIT;

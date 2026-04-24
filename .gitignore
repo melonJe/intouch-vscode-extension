@@ -40,6 +40,15 @@ out/
 dist/
 build/
 
+# Tree-sitter generated files (regenerated via `tree-sitter generate`)
+tree-sitter-intouch/src/parser.c
+tree-sitter-intouch/src/grammar.json
+tree-sitter-intouch/src/node-types.json
+tree-sitter-intouch/src/tree_sitter/
+tree-sitter-intouch/tree-sitter-intouch.wasm
+tree-sitter-intouch/binding.gyp
+tree-sitter-intouch/bindings/
+
 # Temporary files
 *.tmp
 *.temp
