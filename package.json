@@ -37,13 +37,6 @@
         "configuration": "./language-configuration.json"
       }
     ],
-    "grammars": [
-      {
-        "language": "intouch",
-        "scopeName": "source.intouch",
-        "path": "./syntaxes/intouch.tmLanguage.json"
-      }
-    ],
     "semanticTokenScopes": [
       {
         "language": "intouch",

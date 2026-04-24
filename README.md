@@ -6,7 +6,6 @@ Tree-sitter 기반 VSCode extension으로 AVEVA InTouch HMI QuickScript 및 Wind
 
 - **Tree-sitter 파서** — web-tree-sitter (WASM) 기반 정확한 구문 분석
 - **Semantic Tokens** — `DocumentSemanticTokensProvider`로 테마 친화적 하이라이트
-- **TextMate fallback** — semantic token 미지원 테마에서도 기본 색상 표시
 - **131개 built-in 함수** — String/Math/IO/Window/Alarm/File/Historian/SQL/System 카테고리
 - **TODO/FIXME 마커** — `{ TODO ... }` 주석 내 특수 강조
 - **Case-insensitive** — InTouch는 대소문자를 구분하지 않음
@@ -91,8 +90,6 @@ vs-intouch-extension/
 │   ├── extension.ts                      # activate()
 │   ├── parser.ts                         # web-tree-sitter WASM 로드
 │   └── semanticTokensProvider.ts         # Tree → SemanticTokens
-├── syntaxes/
-│   └── intouch.tmLanguage.json           # 최소 TextMate fallback
 ├── tree-sitter-intouch/
 │   ├── grammar.js                        # Tree-sitter 문법
 │   ├── queries/highlights.scm            # 하이라이트 규칙
