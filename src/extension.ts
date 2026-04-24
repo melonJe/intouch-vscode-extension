@@ -7,7 +7,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
   const provider = new IntouchSemanticTokensProvider(parser, language);
 
   ctx.subscriptions.push(
-    vscode.languages.registerDocumentRangeSemanticTokensProvider(
+    vscode.languages.registerDocumentSemanticTokensProvider(
       { language: 'intouch' },
       provider,
       legend,

@@ -115,7 +115,7 @@ interface CachedTree {
 }
 
 export class IntouchSemanticTokensProvider
-  implements vscode.DocumentRangeSemanticTokensProvider, vscode.Disposable {
+  implements vscode.DocumentSemanticTokensProvider, vscode.Disposable {
   private query: Parser.Query | undefined;
   private trees = new Map<string, CachedTree>();
 
@@ -147,19 +147,15 @@ export class IntouchSemanticTokensProvider
     throw new Error('highlights.scm not found (checked ' + candidates.join(', ') + ')');
   }
 
-  provideDocumentRangeSemanticTokens(
+  provideDocumentSemanticTokens(
     document: vscode.TextDocument,
-    range: vscode.Range,
     token: vscode.CancellationToken,
   ): vscode.SemanticTokens {
     const builder = new vscode.SemanticTokensBuilder(legend);
     if (!this.query) return builder.build();
 
     const tree = this.getOrParseTree(document);
-    const captures = this.query.captures(tree.rootNode, {
-      startPosition: { row: range.start.line, column: range.start.character },
-      endPosition: { row: range.end.line, column: range.end.character },
-    });
+    const captures = this.query.captures(tree.rootNode);
 
     const tokens: PendingToken[] = [];
 
