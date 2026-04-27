@@ -53,7 +53,30 @@
           ]
         }
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "intouch.splitExport",
+        "title": "InTouch: Split Project Export…",
+        "category": "InTouch"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "intouch.splitExport",
+          "when": "resourceLangId == intouch || resourceExtname == .txt",
+          "group": "7_modification"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "intouch.splitExport",
+          "when": "resourceLangId == intouch",
+          "group": "1_modification"
+        }
+      ]
+    }
   },
   "repository": {
     "type": "git",
@@ -72,6 +95,7 @@
     "build:parser": "cd tree-sitter-intouch && ./node_modules/.bin/tree-sitter generate && ./node_modules/.bin/tree-sitter build --wasm && cp tree-sitter-intouch.wasm ../out/",
     "compile": "tsc -p .",
     "vscode:prepublish": "npm run build:parser && npm run compile",
-    "package": "vsce package"
+    "package": "vsce package",
+    "split": "node ./out/scripts/split-cli.js"
   }
 }

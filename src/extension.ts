@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { runSplitCommand } from './commands/split';
 import { loadIntouchParser } from './parser';
 import { IntouchSemanticTokensProvider, legend } from './semanticTokensProvider';
 
@@ -19,6 +20,7 @@ export async function activate(ctx: vscode.ExtensionContext): Promise<void> {
     vscode.workspace.onDidCloseTextDocument((doc) => {
       provider.forget(doc.uri);
     }),
+    vscode.commands.registerCommand('intouch.splitExport', runSplitCommand),
     provider,
   );
 }
