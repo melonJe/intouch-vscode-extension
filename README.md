@@ -11,9 +11,9 @@ Tree-sitter 기반 VSCode extension으로 AVEVA InTouch HMI QuickScript 및 Wind
 - **Case-insensitive** — InTouch는 대소문자를 구분하지 않음
 - **프로젝트 분할** — 한 파일로 export된 InTouch 프로젝트를 윈도우/스크립트별 파일로 분리
 
-### 지원 파일
-- `.intouch` — 순수 QuickScript 파일
-- `.txt` — InTouch Window Report export (firstLine 매칭)
+### 인식되는 파일
+- `.intouch` — 본 확장이 등록한 파일 확장자 (InTouch 자체 표준은 아님). QuickScript 코드를 별도 파일로 작성·관리할 때 사용.
+- `.txt` — 첫 줄이 `Window Report` / `Database Report`로 시작하면 InTouch export로 자동 인식.
 
 ## 지원하는 QuickScript 구문
 
@@ -67,13 +67,13 @@ docs/demo_1/
 │   ├── pctConc.txt                                        # 윈도우별 1파일
 │   ├── Conveyor.txt                                       # %는 'pct'로 치환
 │   └── ... (이하 모든 Window Report)
-├── application_scripts/
+├── application/
 │   └── while_application_running_every_100_msec.txt       # trigger별 1파일
-├── condition_scripts/      ← Condition Script별 1파일
-├── data_change_scripts/    ← Data Change Script별 1파일
-├── key_scripts/            ← Key Script별 1파일
-├── quick_functions/        ← QuickFunction별 1파일 (예: L2S132InputEnter.txt)
-├── activex_event_scripts/  ← ActiveX Event Script별 1파일
+├── condition/         ← Condition Script별 1파일 (태그명 기준, 케이스 보존)
+├── data_change/       ← Data Change Script별 1파일 (태그명 기준, 케이스 보존)
+├── key/               ← Key Script별 1파일
+├── quick_functions/   ← QuickFunction별 1파일 (식별자 케이스 보존)
+├── activex_event/     ← ActiveX Event Script별 1파일
 └── database_report.txt                                    # 태그 사전
 ```
 
@@ -86,7 +86,7 @@ docs/demo_1/
 - Explorer에서 `.txt`/`.intouch` 우클릭 → `InTouch: Split Project Export…`
 - 에디터 탭 우클릭 (intouch 언어로 인식되는 파일)
 
-출력 폴더에 이미 파일이 있으면 모달로 `Overwrite all` / `Cancel` 확인. 경고가 있으면 `Output → InTouch Split` 패널에 표시.
+출력 폴더에 이미 파일이 있으면 모달로 `Overwrite all` / `Cancel` 확인. 진행 로그(시작/진행 중/완료)와 경고는 `Output → InTouch Split` 패널에 출력.
 
 **CLI**
 ```bash
@@ -104,7 +104,7 @@ InTouch가 export하는 모든 최상위 카테고리를 인식:
 |---------|--------|--------------|
 | Window Report | `Window Report for "<name>"` | (인스턴스 단위가 곧 윈도우) |
 | Application Scripts | `Application Scripts` | `Application Script:` + 들여쓰기된 `Script <trigger>:` |
-| Condition Scripts | `Condition Scripts` | `Condition Script:<expression>` |
+| Condition Scripts | `Condition Scripts` | `Condition Script:<name>` |
 | Data Change Scripts | `Data Change Scripts` | `Data Change Script:<tagname>` |
 | Key Scripts | `Key Scripts` | `Key Script:<key>` |
 | QuickFunctions | `QuickFunctions` | `QuickFunction:<name>( ... )` |
@@ -139,27 +139,13 @@ F5 키로 VSCode Extension Development Host 실행 → `sample/test.intouch` 또
 npm run package        # .vsix 생성
 ```
 
-## Architecture
+## 핵심 진입점
 
-```
-vs-intouch-extension/
-├── package.json                          # 확장 manifest
-├── language-configuration.json           # { } 주석, 브래킷, autoClosing
-├── tsconfig.json
-├── src/
-│   ├── extension.ts                      # activate()
-│   ├── parser.ts                         # web-tree-sitter WASM 로드
-│   ├── semanticTokensProvider.ts         # Tree → SemanticTokens
-│   ├── splitter/                         # 프로젝트 분할 핵심 로직 (vscode 의존성 X)
-│   ├── commands/split.ts                 # VS Code 명령 래퍼
-│   └── scripts/split-cli.ts              # CLI 진입점 (npm run split)
-├── tree-sitter-intouch/
-│   ├── grammar.js                        # Tree-sitter 문법
-│   ├── queries/highlights.scm            # 하이라이트 규칙
-│   ├── test/corpus/                      # 단위 테스트
-│   └── tree-sitter-intouch.wasm          # 빌드 산출물
-└── sample/test.intouch                   # 수동 테스트용 샘플
-```
+- `src/extension.ts` — VS Code activate
+- `src/splitter/` — 프로젝트 분할 로직 (VS Code 의존성 없음)
+- `src/commands/split.ts` — VS Code 명령 래퍼
+- `src/scripts/split-cli.ts` — CLI 진입점 (`npm run split`)
+- `tree-sitter-intouch/grammar.js`, `queries/highlights.scm` — 문법 + 하이라이트 규칙
 
 ## License
 
