@@ -9,6 +9,45 @@ import { Section, SplitWarning } from './types';
 const WINDOW_HDR = /^[Ww]?indow Report for\s+"([^"]+)"/;
 const TRUNCATED_WINDOW_HDR = /^indow Report for\s+"([^"]+)"/;
 const DB_REPORT_HDR = /^Database Report\s+Printed On\s*:/;
+const LAST_MODIFIED = /^\s*Last Modified Date\/Time\s*:/;
+const TRIGGER_LABEL = /^\s*Script\s+.+:\s*$/i;
+
+function dedentByMin(lines: string[], skipColumnZero: boolean): string[] {
+  let min = Infinity;
+  for (const ln of lines) {
+    if (ln.trim() === '') continue;
+    const lead = /^ */.exec(ln)![0].length;
+    if (skipColumnZero && lead === 0) continue;
+    if (lead < min) min = lead;
+  }
+  if (!isFinite(min) || min === 0) return lines.slice();
+  return lines.map((ln) => {
+    if (ln.trim() === '') return ln;
+    const lead = /^ */.exec(ln)![0].length;
+    if (skipColumnZero && lead === 0) return ln;
+    return lead >= min ? ln.slice(min) : ln.replace(/^ +/, '');
+  });
+}
+
+function dedentScriptBodies(lines: string[]): string[] {
+  const hasTrigger = lines.some((ln) => TRIGGER_LABEL.test(ln));
+  if (!hasTrigger) return dedentByMin(lines, true);
+
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    out.push(lines[i]);
+    if (TRIGGER_LABEL.test(lines[i])) {
+      let j = i + 1;
+      while (j < lines.length && !TRIGGER_LABEL.test(lines[j])) j++;
+      out.push(...dedentByMin(lines.slice(i + 1, j), false));
+      i = j;
+    } else {
+      i++;
+    }
+  }
+  return out;
+}
 
 export interface ParseResult {
   sections: Section[];
@@ -134,17 +173,15 @@ export function parseSections(text: string): ParseResult {
       continue;
     }
 
-    if (cat?.triggerFallback) {
+    if (cat?.triggerFallback && pendingStart !== undefined) {
       const tm = cat.triggerFallback.exec(line);
       if (tm) {
         const triggerName = ensureUniqueOrEmpty(tm[1], cat, i)!;
-        const startLine = pendingStart ?? i;
-        if (pendingStart === undefined) closeAt(i - 1);
         pendings.push({
           kind: 'scriptInstance',
           name: triggerName,
           category: cat.folder,
-          startLine,
+          startLine: pendingStart,
         });
         currentIdx = pendings.length - 1;
         pendingStart = undefined;
@@ -158,7 +195,10 @@ export function parseSections(text: string): ParseResult {
   const finalSections: Section[] = pendings
     .filter((p): p is Required<Pending> => p.endLine !== undefined && p.endLine >= p.startLine)
     .map((p) => {
-      const slice = lines.slice(p.startLine, p.endLine + 1);
+      let slice = lines
+        .slice(p.startLine, p.endLine + 1)
+        .filter((ln) => !LAST_MODIFIED.test(ln));
+      if (p.kind === 'scriptInstance') slice = dedentScriptBodies(slice);
       while (slice.length > 1 && slice[slice.length - 1] === '') slice.pop();
       return {
         kind: p.kind,
