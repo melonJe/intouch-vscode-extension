@@ -248,6 +248,8 @@ export class IntouchSemanticTokensProvider
   }
 
   private getOrParseTree(document: vscode.TextDocument): Parser.Tree {
+    // WHY: (URI, version) 키. 탭 복귀 등 동일 version 호출에서 재파싱을 막고,
+    // 편집 시 incremental update는 applyEdits()가 별도로 처리.
     const uri = document.uri.toString();
     const cached = this.trees.get(uri);
     if (cached && cached.version === document.version) {

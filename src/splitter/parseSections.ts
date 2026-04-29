@@ -9,7 +9,10 @@ import { Section, SplitWarning } from './types';
 const WINDOW_HDR = /^[Ww]?indow Report for\s+"([^"]+)"/;
 const TRUNCATED_WINDOW_HDR = /^indow Report for\s+"([^"]+)"/;
 const DB_REPORT_HDR = /^Database Report\s+Printed On\s*:/;
+// WHY: export 시점에 따라 매번 달라지는 노이즈라 diff 안정성을 위해 출력에서 제거.
 const LAST_MODIFIED = /^\s*Last Modified Date\/Time\s*:/;
+// WHY: `Script <trigger>:` 라벨은 두 의미를 가진다 — Application Script의 인스턴스
+// 이름 복원(triggerFallback) 또는 named instance(예: Condition) 안의 본문 블록 경계.
 const TRIGGER_LABEL = /^\s*Script\s+.+:\s*$/i;
 
 function dedentByMin(lines: string[], skipColumnZero: boolean): string[] {
@@ -29,6 +32,10 @@ function dedentByMin(lines: string[], skipColumnZero: boolean): string[] {
   });
 }
 
+// WHY: 두 분기는 카테고리 형태 차이에서 옴 — docs/design.md §5 참조.
+// trigger 앵커 경로(Application/Condition 등)는 `Script <trigger>:` 사이의 본문 블록을 dedent.
+// 폴백 경로(QuickFunction/ActiveX)는 trigger 라벨 없이 `{...}` 안 본문이라
+// column 0(인스턴스 헤더, `{`, `}`)을 보존하면서 dedent.
 function dedentScriptBodies(lines: string[]): string[] {
   const hasTrigger = lines.some((ln) => TRIGGER_LABEL.test(ln));
   if (!hasTrigger) return dedentByMin(lines, true);
@@ -92,6 +99,8 @@ export function parseSections(text: string): ParseResult {
     currentIdx = pendings.length - 1;
   };
 
+  // WHY: 일부 InTouch export는 첫 줄이 `indow Report for ...`로 잘려 떨어지는
+  // 결함이 관찰됨. 진행 자체를 막는 대신 W를 보충하고 경고로 알린다.
   if (lines.length > 0 && TRUNCATED_WINDOW_HDR.test(lines[0])) {
     lines[0] = 'W' + lines[0];
     warnings.push({
@@ -173,6 +182,8 @@ export function parseSections(text: string): ParseResult {
       continue;
     }
 
+    // WHY: pendingStart 게이트는 named instance(Condition Script: TAG) 안의 trigger 라인이
+    // 별도 섹션으로 분리되어 다른 태그 스크립트와 파일명 충돌하던 버그를 해소. 자세한 경위는 docs/design.md §4.
     if (cat?.triggerFallback && pendingStart !== undefined) {
       const tm = cat.triggerFallback.exec(line);
       if (tm) {

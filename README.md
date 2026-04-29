@@ -58,11 +58,11 @@ ShowHome;              { 사용자 정의 Quickfunction }
 
 WindowMaker가 한 파일에 한꺼번에 export한 프로젝트(`.txt`)를 윈도우·스크립트·태그DB 단위 파일로 분리. 원본 파일은 그대로 유지됨.
 
-### 출력 구조 (예: `docs/demo_1.txt` 입력 시)
+### 출력 구조 (예: `docs/samples/demo_1.txt` 입력 시)
 
 ```
-docs/demo_1.txt                                            # 원본 유지
-docs/demo_1/
+docs/samples/demo_1.txt                                    # 원본 유지
+docs/samples/demo_1/
 ├── windows/
 │   ├── pctConc.txt                                        # 윈도우별 1파일
 │   ├── Conveyor.txt                                       # %는 'pct'로 치환
@@ -90,10 +90,10 @@ docs/demo_1/
 
 **CLI**
 ```bash
-npm run compile                          # 처음 한 번
-npm run split -- docs/demo_1.txt         # 출력 폴더에 파일이 있으면 거부
-npm run split -- docs/demo_1.txt --force # 덮어쓰기
-npm run split -- file1.txt file2.txt     # 여러 파일 일괄
+npm run compile                                  # 처음 한 번
+npm run split -- docs/samples/demo_1.txt         # 출력 폴더에 파일이 있으면 거부
+npm run split -- docs/samples/demo_1.txt --force # 덮어쓰기
+npm run split -- file1.txt file2.txt             # 여러 파일 일괄
 ```
 
 ### 처리되는 형식
@@ -132,7 +132,7 @@ cd tree-sitter-intouch
 npx tree-sitter test
 ```
 
-F5 키로 VSCode Extension Development Host 실행 → `sample/test.intouch` 또는 `docs/demo_*.txt` 열기.
+F5 키로 VSCode Extension Development Host 실행 → `sample/test.intouch` 또는 `docs/samples/demo_*.txt` 열기.
 
 ### 패키지 빌드
 ```bash
@@ -146,6 +146,13 @@ npm run package        # .vsix 생성
 - `src/commands/split.ts` — VS Code 명령 래퍼
 - `src/scripts/split-cli.ts` — CLI 진입점 (`npm run split`)
 - `tree-sitter-intouch/grammar.js`, `queries/highlights.scm` — 문법 + 하이라이트 규칙
+
+## 추가 문서
+
+- [docs/architecture.md](docs/architecture.md) — 모듈 구성, splitter 파이프라인, 상태 머신
+- [docs/design.md](docs/design.md) — 비자명한 설계 결정의 이유 (tree-sitter 선택, `.intouch` 도입, dedent 알고리즘 등)
+- [docs/contributing.md](docs/contributing.md) — 빌드/테스트/새 카테고리 추가 절차
+- [tree-sitter-intouch/README.md](tree-sitter-intouch/README.md) — grammar 서브패키지 가이드
 
 ## License
 
