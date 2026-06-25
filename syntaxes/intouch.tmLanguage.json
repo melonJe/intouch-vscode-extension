@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "InTouch QuickScript",
+  "scopeName": "source.intouch",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.block.intouch",
+      "begin": "\\{",
+      "end": "\\}"
+    },
+    "string": {
+      "name": "string.quoted.double.intouch",
+      "begin": "\"",
+      "end": "\""
+    }
+  }
+}

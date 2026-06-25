@@ -21,6 +21,7 @@
 - TextMate scope(`source.intouch`)에 의존하던 외부 스니펫/테마는 호환성 끊김. CHANGELOG v2.0.0의 마이그레이션 노트 참고.
 - `editor.semanticHighlighting.enabled`가 `false`인 환경에서는 색이 빈약해진다.
 - `BUILTIN_FUNCTIONS` 같은 데이터를 [tree-sitter-intouch/grammar.js](../tree-sitter-intouch/grammar.js)와 [src/semanticTokensProvider.ts](../src/semanticTokensProvider.ts) 양쪽에 유지해야 한다(동기화 의무).
+- **TextMate grammar는 제거되지 않았다** — §6 참조. Semantic tokens가 실제 하이라이트를 담당하고, TextMate grammar는 VSCode bracket colorization의 string 범위 인식 용도로만 유지된다.
 
 ---
 
@@ -116,3 +117,40 @@
 - QuickFunction 출력은 `{` / `}` 사이의 본문이 0칸부터 시작.
 - **가정 위반 시 동작 미정의**: trigger 앵커 경로에서 본문 블록 안에 column 0 라인이 들어가면 그것이 min을 0으로 끌어내려 dedent가 무력화될 수 있다. 실제 export에서 본 적은 없지만 회귀 케이스로 수집할 가치 있음.
 - 향후 dedent 강도를 조절(예: column 4까지만 줄이기)하려면 `dedentByMin`에 옵셔널 floor 인자 추가.
+
+---
+
+## 6. 출력 파일 헤더·래퍼 제거
+
+**Status**: Accepted (v2.2.1, 2026-06-25)
+
+**Context**: `parseSections`는 원래 섹션 헤더 라인(`Application Script:`, `Condition Script: TAG`, `QuickFunction:FuncName( )`)을 `startLine`에 포함시켰다. 결과적으로 출력 파일 첫 줄이 항상 헤더였고, QuickFunction/ActiveX 파일은 `FuncName( )   {` 시그니처 라인과 닫는 `}` 도 본문에 포함됐다. 이 정보는 파일명·폴더명으로 이미 알 수 있어 중복 노이즈였다.
+
+**Decision**: 3단계로 헤더/래퍼를 제거한다.
+
+1. **인스턴스 헤더 라인 제외**: `scriptInstance` 섹션의 `startLine`을 `i + 1`로 설정(헤더 라인 `i` 다음 줄부터 슬라이스). 이전 섹션의 `endLine` 계산이 `startLine - 1`을 사용하므로 `openSection`에 `closeBefore` 파라미터(`i - 1`)를 별도로 넘겨 경계를 분리.
+
+2. **Trigger 라벨 라인 제거**: dedent 후 `TRIGGER_LABEL` 패턴(`Script ...:`)에 매치되는 라인을 `filter`로 제거. Application Script의 trigger fallback 경로는 `startLine: pendingStart + 1`로 trigger 라인 자체를 슬라이스에서 제외.
+
+3. **`{...}` 래퍼 제거** (`stripBraceWrapper`): QuickFunction과 ActiveX Event Script는 본문이 `FuncName( )   {` … `}` 으로 감싸인다. `categories.ts`에 `stripBraceWrapper: true` 플래그를 추가하고, trailing 빈 줄 제거 후 첫 줄(`/\{\s*$/` 매치)과 마지막 줄(`/^\s*\}\s*$/` 매치)을 `slice`로 제거.
+
+**Consequences**:
+- 출력 파일에는 순수 코드 본문만 남는다 — 파일명·폴더명이 헤더 정보를 대체.
+- `closeBefore` 파라미터 도입으로 `openSection` 시그니처가 변경됐다. `window`·`databaseReport`·`scriptInstance` 호출 모두 명시적으로 `i - 1`을 전달.
+- trailing 빈 줄 제거가 `stripBraceWrapper` **앞**에 선행되어야 `}` 매칭이 정상 동작함 — 순서 의존성 주의.
+- `window`·`databaseReport` 섹션은 헤더 제거 대상이 아니다 (구조 문서로서의 가치 유지).
+
+---
+
+## 7. TextMate grammar 유지 (bracket colorization용)
+
+**Status**: Accepted (v2.2.1, 2026-06-25). Supersedes §1의 "TextMate 제거" 결정.
+
+**Context**: §1에서 semantic tokens로 전환하며 TextMate grammar를 제거했다. 그러나 VSCode의 bracket pair colorization은 TextMate grammar의 `string` 스코프를 보고 문자열 내부 괄호를 카운팅에서 제외한다. TextMate grammar가 없으면 `"Show (all)"` 같은 문자열 안의 `(` `)` 가 코드 밖 괄호와 쌍으로 매핑되어 잘못 색칠된다.
+
+**Decision**: [syntaxes/intouch.tmLanguage.json](../syntaxes/intouch.tmLanguage.json)을 최소 정의로 재도입한다. `string.quoted.double.intouch`(`"..."`)와 `comment.block.intouch`(`{...}`) 두 스코프만 정의. 실제 syntax highlighting은 semantic tokens가 담당하므로 TextMate 규칙이 색에 영향을 주지 않는다.
+
+**Consequences**:
+- Bracket pair colorization이 문자열·주석 내부 괄호를 올바르게 무시한다.
+- TextMate grammar가 생성하는 `source.intouch` 토큰은 semantic tokens에 덮어씌워진다 — 시각적 충돌 없음.
+- 향후 semantic tokens를 사용하지 않는 환경(예: `editor.semanticHighlighting.enabled: false`)에서도 최소한 string/comment 색은 TextMate 테마 기반으로 표시된다.

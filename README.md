@@ -113,47 +113,6 @@ InTouch가 export하는 모든 최상위 카테고리를 인식:
 
 CRLF/LF 라인 종결자는 자동 감지·보존. 첫 줄에서 `W`가 누락된 export(`indow Report for ...`)는 자동 보충 + 경고.
 
-## 개발
-
-### 요구 사항
-- Node.js 20+
-- Docker (WASM 빌드용)
-
-### 빌드
-```bash
-npm install
-npm run build:parser   # tree-sitter generate + build --wasm
-npm run compile        # TypeScript → out/
-```
-
-### 테스트
-```bash
-cd tree-sitter-intouch
-npx tree-sitter test
-```
-
-F5 키로 VSCode Extension Development Host 실행 → `sample/test.intouch` 또는 `docs/samples/demo_*.txt` 열기.
-
-### 패키지 빌드
-```bash
-npm run package        # .vsix 생성
-```
-
-## 핵심 진입점
-
-- `src/extension.ts` — VS Code activate
-- `src/splitter/` — 프로젝트 분할 로직 (VS Code 의존성 없음)
-- `src/commands/split.ts` — VS Code 명령 래퍼
-- `src/scripts/split-cli.ts` — CLI 진입점 (`npm run split`)
-- `tree-sitter-intouch/grammar.js`, `queries/highlights.scm` — 문법 + 하이라이트 규칙
-
-## 추가 문서
-
-- [docs/architecture.md](docs/architecture.md) — 모듈 구성, splitter 파이프라인, 상태 머신
-- [docs/design.md](docs/design.md) — 비자명한 설계 결정의 이유 (tree-sitter 선택, `.intouch` 도입, dedent 알고리즘 등)
-- [docs/contributing.md](docs/contributing.md) — 빌드/테스트/새 카테고리 추가 절차
-- [tree-sitter-intouch/README.md](tree-sitter-intouch/README.md) — grammar 서브패키지 가이드
-
 ## License
 
 MIT

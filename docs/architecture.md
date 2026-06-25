@@ -110,14 +110,19 @@ InTouch export는 가끔 첫 줄에서 `W`가 잘려 `indow Report for ...`로 �
 
 ### 후처리 (섹션 텍스트 빌드)
 
-[src/splitter/parseSections.ts:195-211](../src/splitter/parseSections.ts#L195-L211)의 최종 매핑에서:
+`parseSections`의 최종 매핑에서 순서대로:
 
 1. `LAST_MODIFIED` 라인을 필터링 (모든 섹션)
 2. `scriptInstance`이면 `dedentScriptBodies()` 적용
-3. trailing 빈 줄 제거
-4. 원본 라인 종결자(`\r\n` / `\n`)로 join
+3. `scriptInstance`이면 `TRIGGER_LABEL`(`Script ...:`) 라인 필터 제거
+4. trailing 빈 줄 제거
+5. `stripBraceWrapper` 카테고리(QuickFunction·ActiveX)이면 첫 줄(`FuncName( )   {`)·마지막 줄(`}`) 제거
+6. trailing 빈 줄 재정리
+7. 원본 라인 종결자(`\r\n` / `\n`)로 join
 
-`dedentScriptBodies` 분기는 [DESIGN.md §5](design.md#5-script-body-auto-dedent) 참조.
+**순서 의존성**: 4번(trailing 빈 줄 제거)이 5번(`stripBraceWrapper`) 앞에 선행되어야 `}` 패턴 매칭이 정상 동작한다.
+
+`dedentScriptBodies` 분기는 [DESIGN.md §5](design.md#5-script-body-auto-dedent), 헤더·래퍼 제거 결정은 [DESIGN.md §6](design.md#6-출력-파일-헤더래퍼-제거) 참조.
 
 ---
 
@@ -185,6 +190,10 @@ SemanticTokens
 
 [src/semanticTokensProvider.ts:9-26](../src/semanticTokensProvider.ts#L9-L26)의 두 배열은 **선언 순서가 numeric ID**다. SemanticTokensBuilder가 이 순서로 인덱스를 인코딩하므로 **순서를 바꾸면 모든 기존 토큰이 어긋난다**. 추가는 항상 끝에 append.
 
+### TextMate grammar (bracket colorization 전용)
+
+[syntaxes/intouch.tmLanguage.json](../syntaxes/intouch.tmLanguage.json)은 `string.quoted.double.intouch`와 `comment.block.intouch` 두 스코프만 정의한다. 실제 색칠은 semantic tokens가 덮어쓰므로 TextMate 규칙이 사용자에게 보이지 않는다. 존재 이유는 VSCode bracket pair colorization이 `string` 스코프를 보고 문자열 내 괄호를 카운팅에서 제외하기 때문이다. 결정 배경은 [DESIGN.md §7](design.md#7-textmate-grammar-유지-bracket-colorization용) 참조.
+
 ---
 
 ## 6. VSCode ↔ CLI 분담
@@ -211,3 +220,5 @@ SemanticTokens
 - `out/tree-sitter-intouch.wasm` — `build:parser`가 [tree-sitter-intouch/](../tree-sitter-intouch/)에서 생성 후 복사
 
 `semanticTokensProvider.findHighlightsScm()`이 dev/패키지 양쪽에서 `highlights.scm`을 찾을 수 있도록 후보 경로 3개를 순회한다.
+
+`syntaxes/intouch.tmLanguage.json` — TextMate grammar (bracket colorization 전용, [DESIGN.md §7](design.md#7-textmate-grammar-유지-bracket-colorization용) 참조)
