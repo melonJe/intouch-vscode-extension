@@ -6,6 +6,8 @@ export interface ScriptCategory {
   postProcessName?: (raw: string) => string;
   /** Treat the extracted name as a code identifier — preserve case, do not convert to snake_case. */
   preserveIdentifier?: boolean;
+  /** Strip the `FuncName( )   {` first line and closing `}` last line from the output. */
+  stripBraceWrapper?: boolean;
 }
 
 // WHY: 모든 banner/instance 정규식에 `i` 플래그 일괄 적용. InTouch export 파일은
@@ -43,12 +45,14 @@ export const SCRIPT_CATEGORIES: ScriptCategory[] = [
     folder: 'quick_functions',
     postProcessName: (raw) => raw.split('(')[0].trim(),
     preserveIdentifier: true,
+    stripBraceWrapper: true,
   },
   {
     banner: /^ActiveX Event Scripts\s*$/i,
     instance: /^ActiveX Event Script:\s*(.+?)\s*$/i,
     folder: 'activex_event',
     preserveIdentifier: true,
+    stripBraceWrapper: true,
   },
 ];
 

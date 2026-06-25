@@ -93,8 +93,8 @@ export function parseSections(text: string): ParseResult {
     }
   };
 
-  const openSection = (p: Pending): void => {
-    closeAt(p.startLine - 1);
+  const openSection = (p: Pending, closeBefore?: number): void => {
+    closeAt(closeBefore !== undefined ? closeBefore : p.startLine - 1);
     pendings.push(p);
     currentIdx = pendings.length - 1;
   };
@@ -130,14 +130,14 @@ export function parseSections(text: string): ParseResult {
 
     const winMatch = WINDOW_HDR.exec(line);
     if (winMatch) {
-      openSection({ kind: 'window', name: winMatch[1], startLine: i });
+      openSection({ kind: 'window', name: winMatch[1], startLine: i }, i - 1);
       activeCategory = undefined;
       pendingStart = undefined;
       continue;
     }
 
     if (DB_REPORT_HDR.test(line)) {
-      openSection({ kind: 'databaseReport', name: 'database_report', startLine: i });
+      openSection({ kind: 'databaseReport', name: 'database_report', startLine: i }, i - 1);
       activeCategory = undefined;
       pendingStart = undefined;
       continue;
@@ -173,10 +173,10 @@ export function parseSections(text: string): ParseResult {
       const raw = (instMatch[1] || '').trim();
       if (raw === '') {
         closeAt(i - 1);
-        pendingStart = i;
+        pendingStart = i + 1;
       } else {
         const name = ensureUniqueOrEmpty(raw, cat, i)!;
-        openSection({ kind: 'scriptInstance', name, category: cat.folder, startLine: i });
+        openSection({ kind: 'scriptInstance', name, category: cat.folder, startLine: i + 1 }, i - 1);
         pendingStart = undefined;
       }
       continue;
@@ -192,7 +192,7 @@ export function parseSections(text: string): ParseResult {
           kind: 'scriptInstance',
           name: triggerName,
           category: cat.folder,
-          startLine: pendingStart,
+          startLine: pendingStart + 1,
         });
         currentIdx = pendings.length - 1;
         pendingStart = undefined;
@@ -210,6 +210,15 @@ export function parseSections(text: string): ParseResult {
         .slice(p.startLine, p.endLine + 1)
         .filter((ln) => !LAST_MODIFIED.test(ln));
       if (p.kind === 'scriptInstance') slice = dedentScriptBodies(slice);
+      if (p.kind === 'scriptInstance') slice = slice.filter((ln) => !TRIGGER_LABEL.test(ln));
+      while (slice.length > 1 && slice[slice.length - 1] === '') slice.pop();
+      if (p.kind === 'scriptInstance' && p.category) {
+        const cat = SCRIPT_CATEGORIES.find((c) => c.folder === p.category);
+        if (cat?.stripBraceWrapper) {
+          if (slice.length > 0 && /\{\s*$/.test(slice[0])) slice = slice.slice(1);
+          if (slice.length > 0 && /^\s*\}\s*$/.test(slice[slice.length - 1])) slice = slice.slice(0, -1);
+        }
+      }
       while (slice.length > 1 && slice[slice.length - 1] === '') slice.pop();
       return {
         kind: p.kind,

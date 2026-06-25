@@ -67,3 +67,6 @@ coverage/
 
 # OS specific files
 .directory
+
+# Sample files
+docs/samples/*
