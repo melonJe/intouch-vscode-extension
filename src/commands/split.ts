@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { splitProject } from '../splitter';
 import { writeFiles } from '../splitter/writeFiles';
+import { decodeBuffer } from '../splitter/encoding';
 
 let outputChannel: vscode.OutputChannel | undefined;
 
@@ -35,8 +36,12 @@ export async function runSplitCommand(target?: vscode.Uri): Promise<void> {
 
   let text: string;
   try {
-    ch.appendLine(`${stamp()} 진행 중: 파일 읽는 중`);
-    text = await fs.readFile(uri.fsPath, 'utf8');
+    const encodingId = vscode.workspace
+      .getConfiguration('files', { uri, languageId: 'intouch' })
+      .get<string>('encoding', 'utf8');
+    ch.appendLine(`${stamp()} 진행 중: 파일 읽는 중 (encoding: ${encodingId})`);
+    const buffer = await fs.readFile(uri.fsPath);
+    text = decodeBuffer(buffer, encodingId);
   } catch (e) {
     ch.appendLine(`${stamp()} 오류: 파일 읽기 실패 — ${(e as Error).message}`);
     void vscode.window.showErrorMessage(`파일 읽기 실패: ${(e as Error).message}`);

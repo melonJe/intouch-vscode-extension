@@ -88,12 +88,15 @@ docs/samples/demo_1/
 
 출력 폴더에 이미 파일이 있으면 모달로 `Overwrite all` / `Cancel` 확인. 진행 로그(시작/진행 중/완료)와 경고는 `Output → InTouch Split` 패널에 출력.
 
+원본 파일 인코딩은 VS Code의 `files.encoding` 설정(전역/워크스페이스/폴더/`[intouch]` 언어별 오버라이드)을 그대로 사용해서 읽는다. EUC-KR/CP949로 저장된 export가 깨져 보이면 해당 파일 형식에 맞는 인코딩을 `files.encoding`에 설정한 뒤 분할하면 된다.
+
 **CLI**
 ```bash
 npm run compile                                  # 처음 한 번
 npm run split -- docs/samples/demo_1.txt         # 출력 폴더에 파일이 있으면 거부
 npm run split -- docs/samples/demo_1.txt --force # 덮어쓰기
 npm run split -- file1.txt file2.txt             # 여러 파일 일괄
+npm run split -- file1.txt --encoding cp949      # CP949(EUC-KR)로 저장된 파일 읽기
 ```
 
 ### 처리되는 형식

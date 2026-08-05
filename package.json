@@ -2,7 +2,7 @@
   "name": "intouch-language",
   "displayName": "InTouch Support",
   "description": "Tree-sitter-powered syntax highlighting for AVEVA InTouch HMI QuickScript and Window Report exports.",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "publisher": "melonJe",
   "license": "MIT",
   "engines": {
@@ -90,6 +90,7 @@
     "url": "https://github.com/melonJe/intouch-vscode-extension.git"
   },
   "dependencies": {
+    "iconv-lite": "^0.6.3",
     "web-tree-sitter": "^0.22.6"
   },
   "devDependencies": {

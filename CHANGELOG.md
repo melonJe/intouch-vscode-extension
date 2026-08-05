@@ -2,6 +2,21 @@
 
 이 프로젝트의 모든 주요 변경사항은 이 파일에 기록됩니다. 형식은 [Keep a Changelog](https://keepachangelog.com/) 를 따르며, [Semantic Versioning](https://semver.org/) 을 준수합니다.
 
+## [2.3.1] — 2026-08-05
+
+### Fixed
+
+- **분할(Split) 기능의 인코딩 깨짐 버그 수정**: `InTouch: Split Project Export…` 실행 시 원본 파일을 항상 `utf8`로 고정 디코딩하던 문제를 수정. EUC-KR/CP949 등으로 저장된 export 파일이 분할 시 문자가 깨지는 현상이 있었음.
+- 이제 VS Code의 `files.encoding` 설정(전역 → 워크스페이스 → 폴더 → `[intouch]` 언어별 오버라이드 순으로 병합된 유효값)을 그대로 읽어 디코딩. 파일이 정상적으로 보이도록 `files.encoding`을 맞춰둔 상태라면 분할 결과도 동일하게 정상 처리됨.
+- CLI(`npm run split`)에도 `--encoding <id>` 옵션 추가 (기본값 `utf8`).
+
+### 관련 파일
+
+- `src/splitter/encoding.ts` (신규)
+- `src/commands/split.ts`, `src/scripts/split-cli.ts`
+
+---
+
 ## [2.0.0] — 2026-04-25
 
 Tree-sitter 기반 semantic highlighting으로 전환한 메이저 릴리스.
