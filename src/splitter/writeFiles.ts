@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { encodeString } from './encoding';
 import { SplitResult } from './types';
 
 export type ConflictAction = 'overwriteAll' | 'cancel';
@@ -8,6 +9,7 @@ export interface WriteOptions {
   outDir: string;
   overwrite: 'abort' | 'overwriteAll';
   onConflict?: () => Promise<ConflictAction>;
+  encoding?: string;
 }
 
 export interface WriteOutcome {
@@ -37,7 +39,8 @@ export async function writeFiles(result: SplitResult, opts: WriteOptions): Promi
     const rel = file.pathParts.join('/');
     const abs = path.join(opts.outDir, ...file.pathParts);
     await fs.mkdir(path.dirname(abs), { recursive: true });
-    await fs.writeFile(abs, file.content);
+    const buffer = encodeString(file.content, opts.encoding ?? 'utf8');
+    await fs.writeFile(abs, buffer);
     written.push(rel);
   }
 

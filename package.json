@@ -2,7 +2,7 @@
   "name": "intouch-language",
   "displayName": "InTouch Support",
   "description": "Tree-sitter-powered syntax highlighting for AVEVA InTouch HMI QuickScript and Window Report exports.",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "publisher": "melonJe",
   "license": "MIT",
   "engines": {

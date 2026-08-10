@@ -82,3 +82,27 @@ export function decodeBuffer(buffer: Buffer, vscodeEncodingId: string): string {
 
   return iconv.decode(buffer, iconvLabel);
 }
+
+/**
+ * 주어진 문자열을 VS Code 인코딩 id 기준으로 인코딩한다.
+ * utf8/utf8bom은 Node Buffer를 사용하고, 그 외에는 iconv-lite를 사용한다.
+ * 지원하지 않는 인코딩이면 utf8로 폴백한다.
+ */
+export function encodeString(text: string, vscodeEncodingId: string): Buffer {
+  const iconvLabel = mapVscodeEncodingToIconv(vscodeEncodingId);
+
+  if (iconvLabel === 'utf8') {
+    const content = Buffer.from(text, 'utf8');
+    const isUtf8Bom = vscodeEncodingId.toLowerCase().replace(/[^a-z0-9]/g, '') === 'utf8bom';
+    if (isUtf8Bom) {
+      return Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), content]);
+    }
+    return content;
+  }
+
+  if (!iconv.encodingExists(iconvLabel)) {
+    return Buffer.from(text, 'utf8');
+  }
+
+  return iconv.encode(text, iconvLabel);
+}

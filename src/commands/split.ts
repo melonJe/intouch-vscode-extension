@@ -35,8 +35,9 @@ export async function runSplitCommand(target?: vscode.Uri): Promise<void> {
   ch.appendLine(`${stamp()} 시작: ${uri.fsPath}`);
 
   let text: string;
+  let encodingId: string;
   try {
-    const encodingId = vscode.workspace
+    encodingId = vscode.workspace
       .getConfiguration('files', { uri, languageId: 'intouch' })
       .get<string>('encoding', 'utf8');
     ch.appendLine(`${stamp()} 진행 중: 파일 읽는 중 (encoding: ${encodingId})`);
@@ -69,10 +70,11 @@ export async function runSplitCommand(target?: vscode.Uri): Promise<void> {
   const baseDir = path.dirname(uri.fsPath);
   const outDir = path.join(baseDir, path.basename(uri.fsPath, path.extname(uri.fsPath)));
 
-  ch.appendLine(`${stamp()} 진행 중: ${outDir}에 쓰는 중`);
+  ch.appendLine(`${stamp()} 진행 중: ${outDir}에 쓰는 중 (encoding: ${encodingId})`);
   const outcome = await writeFiles(result, {
     outDir,
     overwrite: 'abort',
+    encoding: encodingId,
     onConflict: async () => {
       const choice = await vscode.window.showWarningMessage(
         `${path.basename(outDir)} 폴더에 이미 파일이 있습니다. 덮어쓸까요?`,

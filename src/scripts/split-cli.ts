@@ -30,6 +30,7 @@ async function main(): Promise<void> {
     const outcome = await writeFiles(result, {
       outDir,
       overwrite: force ? 'overwriteAll' : 'abort',
+      encoding,
       onConflict: async () => {
         console.error(`Refusing to overwrite ${outDir}. Re-run with --force.`);
         return 'cancel';

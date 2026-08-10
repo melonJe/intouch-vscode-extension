@@ -2,6 +2,21 @@
 
 이 프로젝트의 모든 주요 변경사항은 이 파일에 기록됩니다. 형식은 [Keep a Changelog](https://keepachangelog.com/) 를 따르며, [Semantic Versioning](https://semver.org/) 을 준수합니다.
 
+## [2.3.2] — 2026-08-10
+
+### Fixed
+
+- **분할(Split) 저장 시에도 원본 인코딩 적용**: `InTouch: Split Project Export…` 실행 시 원본 파일을 디코딩할 때 사용한 VS Code `files.encoding` 값을 분할 결과 파일을 저장할 때도 동일하게 사용. 이전에는 저장 시 Node.js 기본값인 `utf8`로 고정 저장되어, `cp949`/`euc-kr` 등으로 된 원본을 분할하면 결과 파일 인코딩이 깨지거나 달라지는 문제가 있었음.
+- CLI(`npm run split`)에도 `--encoding <id>`로 지정한 인코딩을 저장 시에도 그대로 적용.
+
+### 관련 파일
+
+- `src/splitter/encoding.ts`
+- `src/splitter/writeFiles.ts`
+- `src/commands/split.ts`, `src/scripts/split-cli.ts`
+
+---
+
 ## [2.3.1] — 2026-08-05
 
 ### Fixed
@@ -79,5 +94,8 @@ TextMate grammar 기반의 첫 안정 릴리스. (이전까지 `package.json` �
 
 ---
 
+[Unreleased]: https://github.com/melonJe/intouch-vscode-extension/compare/v2.3.2...HEAD
+[2.3.2]: https://github.com/melonJe/intouch-vscode-extension/releases/tag/v2.3.2
+[2.3.1]: https://github.com/melonJe/intouch-vscode-extension/releases/tag/v2.3.1
 [2.0.0]: https://github.com/melonJe/intouch-vscode-extension/releases/tag/v2.0.0
 [1.0.0]: https://github.com/melonJe/intouch-vscode-extension/releases/tag/v1.0.0
