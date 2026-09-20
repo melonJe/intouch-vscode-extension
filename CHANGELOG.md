@@ -2,6 +2,21 @@
 
 이 프로젝트의 모든 주요 변경사항은 이 파일에 기록됩니다. 형식은 [Keep a Changelog](https://keepachangelog.com/) 를 따르며, [Semantic Versioning](https://semver.org/) 을 준수합니다.
 
+## [2.4.0] — 2026-09-20
+
+### Fixed
+
+- **Application Script: 여러 trigger가 있을 때 첫 파일에 병합되던 문제 수정**: `Script On Application Startup:` / `Script While application running, ...:` / `Script On Application Shutdown:` 처럼 하나의 `Application Script:` 인스턴스 아래 여러 trigger가 있으면, 이전에는 첫 번째 trigger 이후의 내용이 모두 첫 파일에 합쳐졌음. 이제 trigger마다 별도 파일로 정상 분리됨.
+- **Condition Script: 이름 없는 인스턴스(Comment 기반)를 trigger별로 잘못 쪼개던 문제 수정**: 인스턴스 라인에 이름이 없고 본문의 `Comment:` 필드로 이름을 붙이는 export 형식에서, 이전에는 `On True`/`On False`/`While True`/`While False` 등 trigger마다 별도 파일이 생기며 서로 이름이 충돌했음. 이제 하나의 Condition Script 세트(같은 조건에 딸린 모든 trigger)가 `Comment` 값을 파일명으로 삼아 한 파일로 병합되고(Comment가 없으면 `Condition_1`, `Condition_2`... 로 자동 명명), `Script <trigger>:` 라벨은 어느 코드가 어느 trigger인지 구분할 수 있도록 파일 안에 남음. 인스턴스 라인에 이름이 직접 있는 기존 형식(`Condition Script: TAG`)은 영향 없음.
+- **Key Script: 본문에 중복된 `Key:` 필드 라인 제거**: 인스턴스 이름(`Key Script:Ctrl+Shift+t`)이 이미 파일명에 반영되는데, 본문에 동일한 키 조합을 반복하는 `    Key:        Ctrl+Shift+t` 줄이 그대로 남아있던 문제 수정.
+
+### 관련 파일
+
+- `src/splitter/categories.ts`
+- `src/splitter/parseSections.ts`
+
+---
+
 ## [2.3.2] — 2026-08-10
 
 ### Fixed
