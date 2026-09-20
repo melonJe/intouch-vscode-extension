@@ -154,3 +154,41 @@
 - Bracket pair colorization이 문자열·주석 내부 괄호를 올바르게 무시한다.
 - TextMate grammar가 생성하는 `source.intouch` 토큰은 semantic tokens에 덮어씌워진다 — 시각적 충돌 없음.
 - 향후 semantic tokens를 사용하지 않는 환경(예: `editor.semanticHighlighting.enabled: false`)에서도 최소한 string/comment 색은 TextMate 테마 기반으로 표시된다.
+
+---
+
+## 8. Condition Script `nameField` (Comment 기반 병합)
+
+**Status**: Accepted (v2.3.3, 2026-09-20). §4의 "이론상의 환경" 가정을 정정.
+
+**Context**: §4는 `Condition Script:`가 빈 인스턴스로 떨어지는 경우를 "이론상의 환경"이라 불렀고, 그 경우 Application Script와 동일하게 `triggerFallback`이 trigger 라인(`Script On True:` 등)마다 새 섹션을 열도록 설계돼 있었다. 실제 export에서 이 케이스가 확인됐는데, Application Script와 근본적으로 다른 구조였다:
+
+```
+Condition Script:
+EQP_USE_CTC1 == 0 AND
+...
+    Condition:
+EQP_USE_CTC1 == 0 AND
+...
+    Comment:    
+
+        Script On False:
+                EQP_USE_A00 = 1;
+        Script On True:
+                EQP_USE_A00 = 0;
+```
+
+인스턴스 라인 뒤에는 이름 대신 다줄 boolean 조건식이 오고, 사람이 붙인 이름은 `Comment:` 필드에 있다(비어 있을 수 있음). `On True`/`On False`/`While True`/`While False` 등 여러 trigger 블록은 **하나의 Condition Script 세트**에 속한다 — Application Script처럼 trigger마다 별도 파일로 쪼개면 같은 조건에 딸린 코드가 여러 파일로 흩어져 의미가 사라진다.
+
+**Decision**: [categories.ts](../src/splitter/categories.ts)에 `nameField`/`fallbackNamePrefix` 필드를 추가하고 `condition` 카테고리에서 `triggerFallback` 대신 사용한다.
+
+- 인스턴스 라인이 비어 있고 카테고리에 `nameField`가 정의돼 있으면, trigger 라인을 기다리지 않고 즉시 섹션을 열되 이름은 빈 문자열로 둔다([parseSections.ts:189-193](../src/splitter/parseSections.ts#L189-L193)).
+- 본문을 스캔하다 `nameField` 정규식(`Comment:` 라인)에 매치되고 텍스트가 비어있지 않으면 그 시점에 이름을 채운다([parseSections.ts:200-206](../src/splitter/parseSections.ts#L200-L206)).
+- 섹션이 닫힐 때(`closeAt`)까지 이름이 비어 있으면(Comment 없음/빈 값) `${fallbackNamePrefix}_${n}` 형태로 자동 생성 — `condition`은 `Condition_1`, `Condition_2`... (폴더명 `condition`과 다르게 대문자로 시작하도록 `fallbackNamePrefix: 'Condition'` 지정).
+- `Script <trigger>:` 라벨은 `nameField` 카테고리에 한해 최종 출력에서 **제거하지 않는다** — 여러 trigger가 한 파일에 병합되므로 라벨이 없으면 어느 코드가 어느 trigger인지 구분할 수 없다([parseSections.ts:238-241](../src/splitter/parseSections.ts#L238-L241)).
+- 인스턴스 라인에 이름이 직접 있는 기존 케이스(`Condition Script: GROUP_CONFIRM_1`, §4가 다루던 "일상 경로")는 영향 없음 — `raw !== ''`이므로 이 새 분기를 타지 않는다.
+
+**Consequences**:
+- §4의 "`Condition Script:`가 빈 인스턴스로 떨어지는 (이론상의) 환경에서도 pendingStart가 설정되어 trigger fallback이 정상 동작" 서술은 더 이상 정확하지 않다 — 이 환경은 실제로 존재하며, 이제 `triggerFallback`이 아니라 `nameField` 경로를 탄다. `condition` 카테고리는 더 이상 `triggerFallback`을 정의하지 않는다.
+- §3의 "Condition Script의 인스턴스가 트리거 표현식인 환경... `triggerFallback` 경로로 대체 이름이 만들어지므로 케이스 보존이 의미가 없어 사실상 영향 없음"도 마찬가지로 갱신 대상 — 지금은 `nameField`(Comment) 경로를 타며, `preserveIdentifier: true`가 Comment 텍스트의 케이스를 그대로 보존한다.
+- `nameField`는 현재 `condition`에만 쓰이지만, 동일한 export 구조(빈 인스턴스 + 본문 필드로 명명 + 여러 trigger 병합)가 관찰되는 다른 카테고리(예: Data Change Script)가 생기면 재사용 가능하다.

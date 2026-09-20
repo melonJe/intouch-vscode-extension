@@ -86,9 +86,24 @@ export function parseSections(text: string): ParseResult {
   let activeCategory: ScriptCategory | undefined;
   let pendingStart: number | undefined;
 
+  // WHY: nameField 카테고리(Comment 기반)는 이름을 본문에서 나중에 채워 넣으므로, 섹션을
+  // 닫는 시점까지 이름이 비어 있으면(Comment가 없거나 빈 경우) 여기서 폴백 이름을 확정한다.
   const closeAt = (at: number): void => {
     if (currentIdx !== undefined) {
-      pendings[currentIdx].endLine = at;
+      const p = pendings[currentIdx];
+      if (p.name === '' && p.category) {
+        const cat = SCRIPT_CATEGORIES.find((c) => c.folder === p.category);
+        if (cat) {
+          const n = pendings.filter((s) => s.category === cat.folder && s.name !== '').length + 1;
+          p.name = `${cat.fallbackNamePrefix ?? cat.folder}_${n}`;
+          warnings.push({
+            code: 'empty_instance_name',
+            message: `${cat.folder} 인스턴스 이름(Comment)이 비어있어 자동 생성: ${p.name}`,
+            line: p.startLine,
+          });
+        }
+      }
+      p.endLine = at;
       currentIdx = undefined;
     }
   };
@@ -172,8 +187,14 @@ export function parseSections(text: string): ParseResult {
     if (instMatch && cat) {
       const raw = (instMatch[1] || '').trim();
       if (raw === '') {
-        closeAt(i - 1);
-        pendingStart = i + 1;
+        if (cat.nameField) {
+          // WHY: nameField 카테고리는 trigger별로 쪼개지 않고 인스턴스 전체를 한 섹션으로 열어
+          // 두고, 본문의 nameField 라인을 만나면 아래에서 이름을 채운다(§ nameField 스캔).
+          openSection({ kind: 'scriptInstance', name: '', category: cat.folder, startLine: i + 1 }, i - 1);
+        } else {
+          closeAt(i - 1);
+          pendingStart = i + 1;
+        }
       } else {
         const name = ensureUniqueOrEmpty(raw, cat, i)!;
         openSection({ kind: 'scriptInstance', name, category: cat.folder, startLine: i + 1 }, i - 1);
@@ -182,20 +203,25 @@ export function parseSections(text: string): ParseResult {
       continue;
     }
 
+    if (cat?.nameField && currentIdx !== undefined && pendings[currentIdx].category === cat.folder && pendings[currentIdx].name === '') {
+      const nm = cat.nameField.exec(line);
+      if (nm) {
+        const text = (nm[1] || '').trim();
+        if (text !== '') pendings[currentIdx].name = text;
+      }
+    }
+
     // WHY: pendingStart 게이트는 named instance(Condition Script: TAG) 안의 trigger 라인이
     // 별도 섹션으로 분리되어 다른 태그 스크립트와 파일명 충돌하던 버그를 해소. 자세한 경위는 docs/design.md §4.
+    // 하나의 빈 인스턴스(Application Script:) 아래 trigger가 여러 개(Startup/주기실행/Shutdown) 올 수
+    // 있으므로 첫 매치 후에도 pendingStart를 해제하지 않고 유지해 각 trigger마다 새 섹션을 연다.
+    // 다음 banner/instance/EOF에서 정상적으로 게이트가 닫히므로 다른 카테고리로는 새지 않는다.
     if (cat?.triggerFallback && pendingStart !== undefined) {
       const tm = cat.triggerFallback.exec(line);
       if (tm) {
         const triggerName = ensureUniqueOrEmpty(tm[1], cat, i)!;
-        pendings.push({
-          kind: 'scriptInstance',
-          name: triggerName,
-          category: cat.folder,
-          startLine: pendingStart + 1,
-        });
-        currentIdx = pendings.length - 1;
-        pendingStart = undefined;
+        const startLine = currentIdx === undefined ? pendingStart + 1 : i;
+        openSection({ kind: 'scriptInstance', name: triggerName, category: cat.folder, startLine }, i - 1);
         continue;
       }
     }
@@ -206,18 +232,23 @@ export function parseSections(text: string): ParseResult {
   const finalSections: Section[] = pendings
     .filter((p): p is Required<Pending> => p.endLine !== undefined && p.endLine >= p.startLine)
     .map((p) => {
+      const cat = p.kind === 'scriptInstance' && p.category
+        ? SCRIPT_CATEGORIES.find((c) => c.folder === p.category)
+        : undefined;
       let slice = lines
         .slice(p.startLine, p.endLine + 1)
-        .filter((ln) => !LAST_MODIFIED.test(ln));
+        .filter((ln) => !LAST_MODIFIED.test(ln))
+        .filter((ln) => !(cat?.stripFieldLine && cat.stripFieldLine.test(ln)));
       if (p.kind === 'scriptInstance') slice = dedentScriptBodies(slice);
-      if (p.kind === 'scriptInstance') slice = slice.filter((ln) => !TRIGGER_LABEL.test(ln));
+      // WHY: nameField 카테고리(Condition 등)는 여러 trigger 블록을 한 파일에 병합하므로
+      // Script <trigger>: 라벨을 지우면 어느 코드가 어느 trigger인지 알 수 없다 — 보존한다.
+      if (p.kind === 'scriptInstance' && !cat?.nameField) {
+        slice = slice.filter((ln) => !TRIGGER_LABEL.test(ln));
+      }
       while (slice.length > 1 && slice[slice.length - 1] === '') slice.pop();
-      if (p.kind === 'scriptInstance' && p.category) {
-        const cat = SCRIPT_CATEGORIES.find((c) => c.folder === p.category);
-        if (cat?.stripBraceWrapper) {
-          if (slice.length > 0 && /\{\s*$/.test(slice[0])) slice = slice.slice(1);
-          if (slice.length > 0 && /^\s*\}\s*$/.test(slice[slice.length - 1])) slice = slice.slice(0, -1);
-        }
+      if (cat?.stripBraceWrapper) {
+        if (slice.length > 0 && /\{\s*$/.test(slice[0])) slice = slice.slice(1);
+        if (slice.length > 0 && /^\s*\}\s*$/.test(slice[slice.length - 1])) slice = slice.slice(0, -1);
       }
       while (slice.length > 1 && slice[slice.length - 1] === '') slice.pop();
       return {

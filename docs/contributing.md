@@ -53,8 +53,10 @@ InTouch가 새로운 export 카테고리(예: 가상의 `Touch Push Buttons`)를
 - **`banner` / `instance`**: 항상 `i` 플래그. InTouch export는 환경에 따라 케이스가 일정하지 않음([DESIGN.md](design.md)에 ADR 없음 — 코드 옆 `// WHY:` 주석 참조).
 - **`folder`**: 짧고 출력 경로에 노출돼도 어색하지 않은 이름. 기존: `application` / `condition` / `data_change` / `key` / `quick_functions` / `activex_event`.
 - **`preserveIdentifier`**: [DESIGN.md §3](design.md#3-preserveidentifier-플래그-기준)의 표 참고. 인스턴스 이름이 **코드/태그에서 동일 케이스로 등장하는 식별자**면 `true`, 사람이 읽는 트리거 표현식이면 `false`(기본).
-- **`triggerFallback`**: 인스턴스 라인이 비어 떨어지는 카테고리(현재 Application Script만)에서만 정의. 안쪽의 `    Script <trigger>:` 라인에서 이름을 복원하는 정규식. **`pendingStart !== undefined`일 때만 발동**한다는 [DESIGN.md §4](design.md#4-triggerfallback-게이트-pendingstart--undefined)의 게이트 동작 숙지 필수.
+- **`triggerFallback`**: 인스턴스 라인이 비어 떨어지고, trigger마다 **별도 파일**로 쪼개야 하는 카테고리(현재 Application Script만)에서만 정의. 안쪽의 `    Script <trigger>:` 라인에서 이름을 복원하는 정규식. **`pendingStart !== undefined`일 때만 발동**한다는 [DESIGN.md §4](design.md#4-triggerfallback-게이트-pendingstart--undefined)의 게이트 동작 숙지 필수.
+- **`nameField` / `fallbackNamePrefix`**: 인스턴스 라인이 비어 떨어지지만 여러 trigger를 **한 파일로 병합**해야 하는 카테고리(현재 Condition Script만)에서만 정의. `nameField`는 본문의 라벨 필드(예: `Comment:`) 정규식(캡처 그룹 1 = 이름), `fallbackNamePrefix`는 그 필드도 비어 있을 때 `<prefix>_<n>`으로 자동 생성할 접두어. `triggerFallback`과 동시에 정의하지 않는다 — 둘은 "trigger별 파일 분리" vs "trigger 병합" 상호 배타적 목적. 자세한 배경은 [DESIGN.md §8](design.md#8-condition-script-namefield-comment-기반-병합).
 - **`postProcessName`**: 추출한 이름에서 군더더기 제거(예: QuickFunction의 `(args)` 잘라내기). 옵션.
+- **`stripFieldLine`**: 본문에 인스턴스 이름과 동일한 정보를 반복하는 필드 라인(예: Key Script의 `    Key: <combo>`)이 있으면 매치 정규식을 지정해 제거. 파일명으로 이미 알 수 있는 정보라 본문에서는 노이즈일 때만 사용 — Condition Script의 `Condition:`처럼 이름과 무관한 실제 내용이면 지우지 않는다.
 
 ### 2. [tree-sitter-intouch/test/corpus/](../tree-sitter-intouch/test/corpus/)에 샘플 추가 (선택)
 

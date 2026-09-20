@@ -85,7 +85,7 @@ WriteOutcome { written, cancelled }
 |---|---|---|
 | `currentIdx` | 지금 열려 있는 섹션의 `pendings` 인덱스 (없으면 `undefined`) | `openSection()` 시 설정, `closeAt()` 시 해제 |
 | `activeCategory` | 가장 최근에 본 banner의 카테고리 ([categories.ts](../src/splitter/categories.ts)) | banner 매치, Window/DB Report, orphan 인스턴스 매치 시 변경 |
-| `pendingStart` | 비어있는 인스턴스 라인이 발생한 줄 인덱스 (trigger fallback이 이걸 startLine으로 씀) | `Application Script:` 같은 빈 인스턴스에서 설정, trigger fallback 발동 시 해제 |
+| `pendingStart` | 비어있는 인스턴스 라인이 발생한 줄 인덱스 (첫 trigger fallback이 이걸 startLine으로 씀) | `Application Script:` 같은 빈 인스턴스에서 설정, banner/window/DB Report 매치 시 해제. trigger fallback 발동 자체로는 해제하지 않음 — 같은 빈 인스턴스 아래 trigger가 여러 개(Startup/주기실행/Shutdown 등) 올 수 있어 게이트를 계속 열어둬야 각각 별도 섹션으로 열린다 |
 
 ### 라인 종류별 상태 전이
 
@@ -95,10 +95,14 @@ WriteOutcome { written, cancelled }
 | `Database Report Printed On :` | 새 databaseReport 섹션 open | 새 인덱스 | undefined로 리셋 | undefined로 리셋 |
 | 카테고리 banner (`Application Scripts` 등) | 현재 섹션 close, 카테고리 활성화 | undefined | banner의 카테고리 | undefined로 리셋 |
 | named instance (`Condition Script: TAG`) | 새 scriptInstance 섹션 open | 새 인덱스 | 유지 | undefined로 리셋 |
-| empty instance (`Application Script:`) | 현재 섹션 close, pendingStart 설정 | undefined | 유지 | 현재 줄 인덱스 |
-| trigger 라인 (`    Script While ...:`) AND `pendingStart !== undefined` | pendingStart부터 새 섹션 push | 새 인덱스 | 유지 | undefined로 리셋 |
+| empty instance, `nameField` 카테고리 아님 (`Application Script:`) | 현재 섹션 close, pendingStart 설정 | undefined | 유지 | 현재 줄 인덱스 |
+| empty instance, `nameField` 카테고리 (`Condition Script:`, 이름 없이 조건식만) | 이름 빈 문자열(`''`)로 즉시 새 scriptInstance 섹션 open — trigger를 기다리지 않음 | 새 인덱스 | 유지 | 무관(사용 안 함) |
+| `nameField` 라인 (`    Comment: ...`) AND 현재 섹션 이름이 `''` | 캡처된 텍스트가 비어있지 않으면 그 섹션의 이름을 채움 | 유지 | 유지 | 유지 |
+| trigger 라인 (`    Script While ...:`) AND `pendingStart !== undefined` (즉 `triggerFallback`이 있고 `nameField`는 없는 카테고리) | 이전 trigger 섹션(있으면) close, 새 섹션 open(첫 trigger는 pendingStart+1부터, 이후 trigger는 자기 줄부터) | 새 인덱스 | 유지 | 유지 (같은 빈 인스턴스 안의 다음 trigger에도 재사용) |
 | 그 외 일반 라인 | 무변화 (현재 섹션 본문) | 유지 | 유지 | 유지 |
-| EOF | 마지막 섹션 close | undefined | — | — |
+| EOF | 마지막 섹션 close(비어있는 이름은 `closeAt`이 폴백 이름 확정) | undefined | — | — |
+
+**`triggerFallback` vs `nameField`**: 둘 다 "인스턴스 라인에 이름이 없다"는 같은 신호(`raw === ''`)에서 출발하지만 목적이 반대다. `triggerFallback`(Application Script)은 trigger마다 **별도 파일**을 만든다 — 이름을 trigger 라인에서 얻는다. `nameField`(Condition Script)는 여러 trigger를 **한 파일로 병합**한다 — 이름을 trigger와 무관한 본문 필드(`Comment:`)에서 얻고, `Script <trigger>:` 라벨은 출력에서 지우지 않고 남긴다. 한 카테고리가 두 필드를 동시에 가질 필요는 없다(현재 상호 배타적으로 사용). 배경은 [DESIGN.md §8](design.md#8-condition-script-namefield-comment-기반-병합) 참조.
 
 ### orphan 인스턴스 복구
 
@@ -113,14 +117,15 @@ InTouch export는 가끔 첫 줄에서 `W`가 잘려 `indow Report for ...`로 �
 `parseSections`의 최종 매핑에서 순서대로:
 
 1. `LAST_MODIFIED` 라인을 필터링 (모든 섹션)
-2. `scriptInstance`이면 `dedentScriptBodies()` 적용
-3. `scriptInstance`이면 `TRIGGER_LABEL`(`Script ...:`) 라인 필터 제거
-4. trailing 빈 줄 제거
-5. `stripBraceWrapper` 카테고리(QuickFunction·ActiveX)이면 첫 줄(`FuncName( )   {`)·마지막 줄(`}`) 제거
-6. trailing 빈 줄 재정리
-7. 원본 라인 종결자(`\r\n` / `\n`)로 join
+2. 카테고리에 `stripFieldLine`이 정의돼 있으면 매치되는 라인을 필터링 — 인스턴스 이름에 이미 드러난 정보를 본문에서 반복하는 필드 라인용(예: Key Script의 `Key: <combo>`)
+3. `scriptInstance`이면 `dedentScriptBodies()` 적용
+4. `scriptInstance`이고 카테고리에 `nameField`가 **없으면** `TRIGGER_LABEL`(`Script ...:`) 라인 필터 제거 — `nameField` 카테고리(Condition 등)는 여러 trigger가 한 파일에 병합되므로 라벨을 남겨 구분 가능하게 한다
+5. trailing 빈 줄 제거
+6. `stripBraceWrapper` 카테고리(QuickFunction·ActiveX)이면 첫 줄(`FuncName( )   {`)·마지막 줄(`}`) 제거
+7. trailing 빈 줄 재정리
+8. 원본 라인 종결자(`\r\n` / `\n`)로 join
 
-**순서 의존성**: 4번(trailing 빈 줄 제거)이 5번(`stripBraceWrapper`) 앞에 선행되어야 `}` 패턴 매칭이 정상 동작한다.
+**순서 의존성**: 5번(trailing 빈 줄 제거)이 6번(`stripBraceWrapper`) 앞에 선행되어야 `}` 패턴 매칭이 정상 동작한다.
 
 `dedentScriptBodies` 분기는 [DESIGN.md §5](design.md#5-script-body-auto-dedent), 헤더·래퍼 제거 결정은 [DESIGN.md §6](design.md#6-출력-파일-헤더래퍼-제거) 참조.
 

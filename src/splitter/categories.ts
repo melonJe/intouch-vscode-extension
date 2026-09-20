@@ -8,6 +8,16 @@ export interface ScriptCategory {
   preserveIdentifier?: boolean;
   /** Strip the `FuncName( )   {` first line and closing `}` last line from the output. */
   stripBraceWrapper?: boolean;
+  /**
+   * When the instance line has no name, look for this field inside the body (capture group 1)
+   * instead of treating `Script <trigger>:` lines as separate-file boundaries. All trigger blocks
+   * stay merged into one file and their `Script ...:` labels are kept in the output (not stripped).
+   */
+  nameField?: RegExp;
+  /** Prefix for the auto-generated name when both the instance line and nameField are empty. */
+  fallbackNamePrefix?: string;
+  /** Body lines matching this pattern are dropped from the output — redundant metadata already captured in the filename. */
+  stripFieldLine?: RegExp;
 }
 
 // WHY: 모든 banner/instance 정규식에 `i` 플래그 일괄 적용. InTouch export 파일은
@@ -25,8 +35,13 @@ export const SCRIPT_CATEGORIES: ScriptCategory[] = [
     banner: /^Condition Scripts\s*$/i,
     instance: /^Condition Script:\s*(.*?)\s*$/i,
     folder: 'condition',
-    triggerFallback: /^\s{4,}Script\s+(.+?):\s*$/i,
     preserveIdentifier: true,
+    // WHY: 일부 export는 인스턴스 라인에 이름이 없고 본문의 `Comment:` 필드가 사람이 붙인
+    // 이름 역할을 한다. On True/On False/While True/While False 등 여러 trigger 블록이 한
+    // Condition Script 세트에 속하므로(Application Script와 반대) 트리거별로 쪼개지 않고
+    // Comment 이름의 파일 하나로 병합한다.
+    nameField: /^\s*Comment:\s*(.*)$/i,
+    fallbackNamePrefix: 'Condition',
   },
   {
     banner: /^Data Change Scripts\s*$/i,
@@ -38,6 +53,10 @@ export const SCRIPT_CATEGORIES: ScriptCategory[] = [
     banner: /^Key Scripts\s*$/i,
     instance: /^Key Script:\s*(.*?)\s*$/i,
     folder: 'key',
+    // WHY: 인스턴스 라인이 이미 키 조합 이름을 담고 있는데(`Key Script:Ctrl+Shift+t`), 본문에
+    // 동일 정보를 반복하는 `    Key:        Ctrl+Shift+t` 라인이 또 있다. 파일명으로 이미
+    // 드러나므로 본문에서는 중복 노이즈일 뿐이라 제거한다.
+    stripFieldLine: /^\s*Key:\s*.*$/i,
   },
   {
     banner: /^QuickFunctions\s*$/i,
