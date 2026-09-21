@@ -56,7 +56,9 @@ InTouch가 새로운 export 카테고리(예: 가상의 `Touch Push Buttons`)를
 - **`triggerFallback`**: 인스턴스 라인이 비어 떨어지고, trigger마다 **별도 파일**로 쪼개야 하는 카테고리(현재 Application Script만)에서만 정의. 안쪽의 `    Script <trigger>:` 라인에서 이름을 복원하는 정규식. **`pendingStart !== undefined`일 때만 발동**한다는 [DESIGN.md §4](design.md#4-triggerfallback-게이트-pendingstart--undefined)의 게이트 동작 숙지 필수.
 - **`nameField` / `fallbackNamePrefix`**: 인스턴스 라인이 비어 떨어지지만 여러 trigger를 **한 파일로 병합**해야 하는 카테고리(현재 Condition Script만)에서만 정의. `nameField`는 본문의 라벨 필드(예: `Comment:`) 정규식(캡처 그룹 1 = 이름), `fallbackNamePrefix`는 그 필드도 비어 있을 때 `<prefix>_<n>`으로 자동 생성할 접두어. `triggerFallback`과 동시에 정의하지 않는다 — 둘은 "trigger별 파일 분리" vs "trigger 병합" 상호 배타적 목적. 자세한 배경은 [DESIGN.md §8](design.md#8-condition-script-namefield-comment-기반-병합).
 - **`postProcessName`**: 추출한 이름에서 군더더기 제거(예: QuickFunction의 `(args)` 잘라내기). 옵션.
-- **`stripFieldLine`**: 본문에 인스턴스 이름과 동일한 정보를 반복하는 필드 라인(예: Key Script의 `    Key: <combo>`)이 있으면 매치 정규식을 지정해 제거. 파일명으로 이미 알 수 있는 정보라 본문에서는 노이즈일 때만 사용 — Condition Script의 `Condition:`처럼 이름과 무관한 실제 내용이면 지우지 않는다.
+- **`stripFieldLine`**: 본문에 인스턴스 이름과 동일한 정보를 반복하는 필드 라인(예: Key Script의 `    Key: <combo>`, Condition Script의 `Comment:`)이 있으면 매치 정규식을 지정해 제거. 파일명으로 이미 알 수 있는 정보라 본문에서는 노이즈일 때만 사용 — Condition Script의 `Condition:`처럼 이름과 무관한 실제 내용이면 지우지 않는다.
+- **`bodyStartField`**: 인스턴스 헤더 뒤에 본문 필드와 중복되는 사본이 먼저 나오는 export(Condition Script의 조건식 반복)에서, 출력을 시작할 필드의 정규식. 첫 매치 지점부터 출력하고 앞은 버린다. 매치가 없으면 아무것도 버리지 않으므로 헤더 구조가 다른 변종에도 안전하다.
+- **카테고리 단위 적용 주의**: `nameField`·`stripFieldLine`·`bodyStartField`와 라벨 보존 dedent는 모두 `p.category` 기준이라 그 카테고리의 **모든 인스턴스**에 적용된다. "인스턴스 라인이 비어있을 때만" 같은 조건부 동작이 필요하면 별도 분기를 만들어야 한다([DESIGN.md §9](design.md#9-condition-script-출력-형태-중복-제거--상대-들여쓰기)).
 
 ### 2. [tree-sitter-intouch/test/corpus/](../tree-sitter-intouch/test/corpus/)에 샘플 추가 (선택)
 

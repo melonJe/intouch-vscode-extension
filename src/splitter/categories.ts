@@ -18,6 +18,12 @@ export interface ScriptCategory {
   fallbackNamePrefix?: string;
   /** Body lines matching this pattern are dropped from the output — redundant metadata already captured in the filename. */
   stripFieldLine?: RegExp;
+  /**
+   * Output starts at the first line matching this (inclusive); everything before it is dropped.
+   * For exports that echo the instance header content before the real fields begin.
+   * No match anywhere in the section means the section is left untouched.
+   */
+  bodyStartField?: RegExp;
 }
 
 // WHY: 모든 banner/instance 정규식에 `i` 플래그 일괄 적용. InTouch export 파일은
@@ -42,6 +48,10 @@ export const SCRIPT_CATEGORIES: ScriptCategory[] = [
     // Comment 이름의 파일 하나로 병합한다.
     nameField: /^\s*Comment:\s*(.*)$/i,
     fallbackNamePrefix: 'Condition',
+    // WHY: 인스턴스 헤더 뒤에 조건식이 한 번 나오고 `Condition:` 필드에서 똑같이 반복된다.
+    // 앞쪽 사본은 중복이라 `Condition:`부터 출력한다. Comment는 파일명으로 이미 드러나므로 제거.
+    bodyStartField: /^\s*Condition:/i,
+    stripFieldLine: /^\s*Comment:/i,
   },
   {
     banner: /^Data Change Scripts\s*$/i,

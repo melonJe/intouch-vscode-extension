@@ -117,17 +117,29 @@ InTouch export는 가끔 첫 줄에서 `W`가 잘려 `indow Report for ...`로 �
 `parseSections`의 최종 매핑에서 순서대로:
 
 1. `LAST_MODIFIED` 라인을 필터링 (모든 섹션)
-2. 카테고리에 `stripFieldLine`이 정의돼 있으면 매치되는 라인을 필터링 — 인스턴스 이름에 이미 드러난 정보를 본문에서 반복하는 필드 라인용(예: Key Script의 `Key: <combo>`)
-3. `scriptInstance`이면 `dedentScriptBodies()` 적용
-4. `scriptInstance`이고 카테고리에 `nameField`가 **없으면** `TRIGGER_LABEL`(`Script ...:`) 라인 필터 제거 — `nameField` 카테고리(Condition 등)는 여러 trigger가 한 파일에 병합되므로 라벨을 남겨 구분 가능하게 한다
-5. trailing 빈 줄 제거
-6. `stripBraceWrapper` 카테고리(QuickFunction·ActiveX)이면 첫 줄(`FuncName( )   {`)·마지막 줄(`}`) 제거
-7. trailing 빈 줄 재정리
-8. 원본 라인 종결자(`\r\n` / `\n`)로 join
+2. 카테고리에 `bodyStartField`가 있으면 첫 매치 지점부터로 잘라냄(`trimToBodyStart`) — 인스턴스 헤더 뒤에 본문 필드와 중복되는 사본이 나오는 export용(Condition Script의 조건식 반복). **매치가 없으면 원본 유지**
+3. 카테고리에 `stripFieldLine`이 있으면 매치 라인을 제거(`stripFieldLines`) — 파일명에 이미 드러난 정보를 반복하는 필드 라인용(Key Script의 `Key: <combo>`, Condition Script의 `Comment:`). 지운 라인의 양옆이 모두 빈 줄이면 뒤쪽 빈 줄 하나도 같이 제거
+4. `scriptInstance`이면 `dedentScriptBodies(slice, preserveLabels)` 적용 — `preserveLabels`는 `nameField` 여부
+5. `scriptInstance`이고 카테고리에 `nameField`가 **없으면** `TRIGGER_LABEL`(`Script ...:`) 라인 필터 제거 — `nameField` 카테고리(Condition 등)는 여러 trigger가 한 파일에 병합되므로 라벨을 남겨 구분 가능하게 한다
+6. trailing 빈 줄 제거
+7. `stripBraceWrapper` 카테고리(QuickFunction·ActiveX)이면 첫 줄(`FuncName( )   {`)·마지막 줄(`}`) 제거
+8. trailing 빈 줄 재정리
+9. 원본 라인 종결자(`\r\n` / `\n`)로 join
 
-**순서 의존성**: 5번(trailing 빈 줄 제거)이 6번(`stripBraceWrapper`) 앞에 선행되어야 `}` 패턴 매칭이 정상 동작한다.
+**순서 의존성**: 6번(trailing 빈 줄 제거)이 7번(`stripBraceWrapper`) 앞에 선행되어야 `}` 패턴 매칭이 정상 동작한다.
 
-`dedentScriptBodies` 분기는 [DESIGN.md §5](design.md#5-script-body-auto-dedent), 헤더·래퍼 제거 결정은 [DESIGN.md §6](design.md#6-출력-파일-헤더래퍼-제거) 참조.
+### dedent 모드 두 가지
+
+`dedentScriptBodies`의 trigger 앵커 경로는 `preserveLabels`로 갈린다:
+
+| 모드 | 대상 | 라벨 | 본문 |
+|---|---|---|---|
+| `false` (기본) | 라벨을 어차피 5번에서 지우는 카테고리(Application·Key 등) | 원본 그대로(어차피 제거됨) | `dedentByMin`으로 0칸까지 |
+| `true` | `nameField` 카테고리(Condition) | 0칸으로 이동 | 라벨의 들여쓰기만큼만 왼쪽 이동 — 라벨 대비 상대 들여쓰기 보존 |
+
+`preserveLabels: true`에서 본문을 0칸까지 밀면 남겨둔 라벨과 본문이 같은 열에 붙어 블록 구조가 사라지므로, 블록 전체를 라벨 들여쓰기만큼만 옮긴다(`shiftBlockByLabelIndent`). 예: 라벨 8칸·본문 16칸 → 라벨 0칸·본문 8칸.
+
+`dedentScriptBodies` 분기는 [DESIGN.md §5](design.md#5-script-body-auto-dedent), 헤더·래퍼 제거 결정은 [DESIGN.md §6](design.md#6-출력-파일-헤더래퍼-제거), Condition Script 출력 형태는 [DESIGN.md §9](design.md#9-condition-script-출력-형태-중복-제거--상대-들여쓰기) 참조.
 
 ---
 

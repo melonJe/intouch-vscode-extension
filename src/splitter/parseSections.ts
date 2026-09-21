@@ -36,20 +36,56 @@ function dedentByMin(lines: string[], skipColumnZero: boolean): string[] {
 // trigger 앵커 경로(Application/Condition 등)는 `Script <trigger>:` 사이의 본문 블록을 dedent.
 // 폴백 경로(QuickFunction/ActiveX)는 trigger 라벨 없이 `{...}` 안 본문이라
 // column 0(인스턴스 헤더, `{`, `}`)을 보존하면서 dedent.
-function dedentScriptBodies(lines: string[]): string[] {
+// WHY: preserveLabels 경로(라벨을 출력에 남기는 nameField 카테고리)는 본문을 0칸까지
+// 밀어버리면 라벨과 본문이 같은 열에 붙어 블록 구조가 사라진다. 라벨의 들여쓰기만큼만
+// 블록 전체를 왼쪽으로 옮겨 라벨 대비 상대 들여쓰기를 보존한다.
+function shiftBlockByLabelIndent(label: string, body: string[]): string[] {
+  const shift = /^ */.exec(label)![0].length;
+  const dedent = (ln: string): string =>
+    ln.trim() === '' ? ln : ln.slice(Math.min(shift, /^ */.exec(ln)![0].length));
+  return [label.slice(shift), ...body.map(dedent)];
+}
+
+// WHY: 필드 라인만 지우면 앞뒤 빈 줄이 겹쳐 남는다. 양옆이 모두 빈 줄이면 뒤쪽 하나도 같이 지운다.
+function stripFieldLines(lines: string[], pattern: RegExp): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!pattern.test(lines[i])) {
+      out.push(lines[i]);
+      continue;
+    }
+    const prevBlank = out.length > 0 && out[out.length - 1].trim() === '';
+    const nextBlank = i + 1 < lines.length && lines[i + 1].trim() === '';
+    if (prevBlank && nextBlank) i++;
+  }
+  return out;
+}
+
+// 매치가 없으면(-1) 원본 그대로 — 헤더 구조가 다른 export를 통째로 날려버리지 않기 위함.
+function trimToBodyStart(lines: string[], pattern: RegExp): string[] {
+  const at = lines.findIndex((ln) => pattern.test(ln));
+  return at > 0 ? lines.slice(at) : lines;
+}
+
+function dedentScriptBodies(lines: string[], preserveLabels: boolean): string[] {
   const hasTrigger = lines.some((ln) => TRIGGER_LABEL.test(ln));
   if (!hasTrigger) return dedentByMin(lines, true);
 
   const out: string[] = [];
   let i = 0;
   while (i < lines.length) {
-    out.push(lines[i]);
     if (TRIGGER_LABEL.test(lines[i])) {
       let j = i + 1;
       while (j < lines.length && !TRIGGER_LABEL.test(lines[j])) j++;
-      out.push(...dedentByMin(lines.slice(i + 1, j), false));
+      const body = lines.slice(i + 1, j);
+      if (preserveLabels) {
+        out.push(...shiftBlockByLabelIndent(lines[i], body));
+      } else {
+        out.push(lines[i], ...dedentByMin(body, false));
+      }
       i = j;
     } else {
+      out.push(lines[i]);
       i++;
     }
   }
@@ -237,9 +273,10 @@ export function parseSections(text: string): ParseResult {
         : undefined;
       let slice = lines
         .slice(p.startLine, p.endLine + 1)
-        .filter((ln) => !LAST_MODIFIED.test(ln))
-        .filter((ln) => !(cat?.stripFieldLine && cat.stripFieldLine.test(ln)));
-      if (p.kind === 'scriptInstance') slice = dedentScriptBodies(slice);
+        .filter((ln) => !LAST_MODIFIED.test(ln));
+      if (cat?.bodyStartField) slice = trimToBodyStart(slice, cat.bodyStartField);
+      if (cat?.stripFieldLine) slice = stripFieldLines(slice, cat.stripFieldLine);
+      if (p.kind === 'scriptInstance') slice = dedentScriptBodies(slice, !!cat?.nameField);
       // WHY: nameField 카테고리(Condition 등)는 여러 trigger 블록을 한 파일에 병합하므로
       // Script <trigger>: 라벨을 지우면 어느 코드가 어느 trigger인지 알 수 없다 — 보존한다.
       if (p.kind === 'scriptInstance' && !cat?.nameField) {

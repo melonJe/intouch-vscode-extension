@@ -192,3 +192,26 @@ EQP_USE_CTC1 == 0 AND
 - §4의 "`Condition Script:`가 빈 인스턴스로 떨어지는 (이론상의) 환경에서도 pendingStart가 설정되어 trigger fallback이 정상 동작" 서술은 더 이상 정확하지 않다 — 이 환경은 실제로 존재하며, 이제 `triggerFallback`이 아니라 `nameField` 경로를 탄다. `condition` 카테고리는 더 이상 `triggerFallback`을 정의하지 않는다.
 - §3의 "Condition Script의 인스턴스가 트리거 표현식인 환경... `triggerFallback` 경로로 대체 이름이 만들어지므로 케이스 보존이 의미가 없어 사실상 영향 없음"도 마찬가지로 갱신 대상 — 지금은 `nameField`(Comment) 경로를 타며, `preserveIdentifier: true`가 Comment 텍스트의 케이스를 그대로 보존한다.
 - `nameField`는 현재 `condition`에만 쓰이지만, 동일한 export 구조(빈 인스턴스 + 본문 필드로 명명 + 여러 trigger 병합)가 관찰되는 다른 카테고리(예: Data Change Script)가 생기면 재사용 가능하다.
+
+---
+
+## 9. Condition Script 출력 형태 (중복 제거 + 상대 들여쓰기)
+
+**Status**: Accepted (v2.5.0, 2026-09-21). §8의 출력 형태를 구체화.
+
+**Context**: §8은 "여러 trigger를 한 파일로 병합하고 라벨을 남긴다"까지만 정했고 본문 구성은 원본 슬라이스를 거의 그대로 뒀다. 실제 출력을 보니 읽기 어려운 잔재가 셋 있었다:
+
+1. **조건식이 두 번 나온다** — 인스턴스 헤더(`Condition Script:`) 바로 뒤에 조건식이 한 번, 다시 `    Condition:` 필드 아래에 똑같이 한 번.
+2. **`Comment:` 라인이 본문에 남는다** — 그 값은 이미 파일명이다(§8). Key Script의 `Key:` 라인을 지운 것과 같은 중복.
+3. **라벨과 본문이 같은 열에 붙는다** — §5의 dedent는 본문을 0칸까지 미는데, §8이 라벨을 남기기로 하면서 `Script On False:`(원본 8칸)와 그 본문(원본 16칸)이 모두 0칸이 되어 어느 코드가 어느 trigger인지 시각적으로 구분되지 않았다.
+
+**Decision**: 카테고리 필드 둘을 추가하고 dedent에 모드를 하나 만든다.
+
+- **`bodyStartField`** (`condition` = `/^\s*Condition:/i`): 이 패턴의 첫 매치 지점부터 출력. 앞의 헤더 사본은 버린다. **매치가 없으면 슬라이스를 그대로 둔다** — 헤더 구조가 다른 export를 통째로 날리지 않기 위한 안전장치이며, 경고도 만들지 않는다(관찰된 적 없는 케이스에 `SplitWarningCode`를 늘리지 않음).
+- **`stripFieldLine`** (`condition` = `/^\s*Comment:/i`): Key Script에서 쓰던 기존 필드를 재사용. 다만 필드 라인만 지우면 앞뒤 빈 줄이 겹쳐 남으므로, 양옆이 모두 빈 줄이면 뒤쪽 하나도 함께 지운다. 빈 줄 판정은 `=== ''`가 아니라 `.trim() === ''` — InTouch export는 공백만 있는 줄이 흔하다.
+- **`dedentScriptBodies(slice, preserveLabels)`**: `nameField` 카테고리는 trigger 블록(라벨 + 본문) 전체를 **라벨의 들여쓰기만큼만** 왼쪽으로 옮긴다. 라벨 8칸·본문 16칸 → 라벨 0칸·본문 8칸. 라벨을 지워버리는 카테고리(Application·Key)는 기존 `dedentByMin` 경로 그대로 0칸까지 민다.
+
+**Consequences**:
+- §8의 Decision 마지막 줄("인스턴스 라인에 이름이 직접 있는 기존 케이스는 영향 없음")은 이제 **이름에 대해서만** 참이다. `bodyStartField`/`stripFieldLine`/`preserveLabels`는 `p.category` 기준이라 인스턴스 단위가 아니라 **카테고리 단위**로 적용된다 — `Condition Script: GROUP_CONFIRM_1` 같은 기명 인스턴스도 `Comment:` 라인이 지워지고 라벨이 0칸으로 옮겨진다. 파일명만 종전대로 인스턴스 라인에서 온다.
+- 세 플래그가 모두 카테고리 단위라는 점은 새 카테고리에 이 필드를 달 때 반드시 의식해야 한다 — "빈 인스턴스일 때만" 같은 조건부 적용이 필요하면 별도 분기가 필요하다.
+- 들여쓰기 이동은 스페이스만 센다(`/^ */`). 탭으로 들여쓴 본문은 이동하지 않는다 — §5의 `dedentByMin`도 같은 제약이라 일관적이며, 관찰된 export는 모두 스페이스다.
