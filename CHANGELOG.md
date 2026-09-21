@@ -2,6 +2,22 @@
 
 이 프로젝트의 모든 주요 변경사항은 이 파일에 기록됩니다. 형식은 [Keep a Changelog](https://keepachangelog.com/) 를 따르며, [Semantic Versioning](https://semver.org/) 을 준수합니다.
 
+## [2.5.0] — 2026-09-21
+
+### Changed
+
+- **Condition Script 출력에서 중복 헤더 제거**: 인스턴스 헤더(`Condition Script:`) 뒤에 한 번, `Condition:` 필드 아래에 또 한 번 반복되던 조건식 중 앞쪽 사본을 제거하고 `Condition:`부터 출력. 헤더 구조가 달라 `Condition:` 필드가 없는 export는 아무것도 버리지 않음.
+- **`Comment:` 라인을 본문에서 제거**: 그 값은 이미 파일명이므로(2.4.0) 본문에서는 중복. Key Script의 `Key:` 라인과 같은 처리.
+- **trigger 라벨 기준 상대 들여쓰기 보존**: `Script On True:` / `Script On False:` 등 라벨을 남기는 Condition Script에서, 본문을 0칸까지 밀어 라벨과 같은 열에 붙던 것을 라벨 들여쓰기만큼만 이동하도록 변경(라벨 8칸·본문 16칸 → 라벨 0칸·본문 8칸). 라벨을 제거하는 Application/Key Script는 종전대로 0칸.
+- 위 세 동작은 카테고리 단위로 적용되므로, 인스턴스 라인에 이름이 직접 있는 `Condition Script: TAG` 형식도 본문 형태가 같이 바뀜(파일명은 종전대로 인스턴스 라인에서 옴).
+
+### 관련 파일
+
+- `src/splitter/categories.ts`
+- `src/splitter/parseSections.ts`
+
+---
+
 ## [2.4.0] — 2026-09-20
 
 ### Fixed
